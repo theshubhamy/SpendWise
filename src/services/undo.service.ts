@@ -7,7 +7,11 @@ import { QUERIES } from '@/database/queries';
 import { UndoAction } from '@/types';
 import { generateUUID } from '@/utils/uuid';
 import { MAX_UNDO_HISTORY } from '@/constants';
-import { createExpense, updateExpense, deleteExpense } from '@/services/expense.service';
+import {
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from '@/services/expense.service';
 import { Expense } from '@/types';
 
 /**
@@ -16,7 +20,7 @@ import { Expense } from '@/types';
 export const saveUndoAction = async (
   type: UndoAction['type'],
   entityType: UndoAction['entityType'],
-  payload: any
+  payload: unknown,
 ): Promise<void> => {
   const db = getDatabase();
   const id = generateUUID();
@@ -39,7 +43,9 @@ export const saveUndoAction = async (
 /**
  * Get recent undo actions
  */
-export const getUndoHistory = async (limit: number = MAX_UNDO_HISTORY): Promise<UndoAction[]> => {
+export const getUndoHistory = async (
+  limit: number = MAX_UNDO_HISTORY,
+): Promise<UndoAction[]> => {
   const db = getDatabase();
   const result = db.query(QUERIES.GET_UNDO_HISTORY, [limit]);
 
@@ -134,4 +140,3 @@ const undoExpenseAction = async (action: UndoAction): Promise<void> => {
       break;
   }
 };
-

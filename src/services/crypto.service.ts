@@ -12,9 +12,7 @@
  * ChaCha20-Poly1305 is more secure and faster than AES-GCM on mobile devices.
  */
 
-import { ENCRYPTION_ALGORITHM, IV_SIZE, TAG_SIZE } from '@/constants';
 import * as Keychain from 'react-native-keychain';
-import { generateSecureKey, hexToBase64, base64ToHex } from '@/utils/crypto-utils';
 import sodium from 'react-native-libsodium';
 
 const ENCRYPTION_KEY_ALIAS = 'spendwise_encryption_key';
@@ -79,26 +77,28 @@ export const encrypt = async (plaintext: string): Promise<string> => {
 
     // Encrypt using XChaCha20-Poly1305-IETF
     // This includes authentication tag automatically
-    // Signature: encrypt(message, ad, secret_nonce, key)
+    // Signature: encrypt(message, ad, public_nonce, secret_nonce, key)
     const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       messageBytes,
-      null, // No additional data (AD)
+      '', // No additional data (AD) - empty string
+      '', // Public nonce (empty string for secret nonce mode)
       nonce, // 24-byte secret nonce
-      keyBytes
+      keyBytes,
     );
 
     // Format: NONCE_LENGTH(1 byte) + NONCE(24 bytes) + CIPHERTEXT_WITH_TAG
     const nonceLength = String.fromCharCode(24);
-    const combined = nonceLength + sodium.to_string(nonce) + sodium.to_string(ciphertext);
+    const nonceString = sodium.to_string(nonce);
+    const ciphertextString = sodium.to_string(ciphertext);
+    const combined = nonceLength + nonceString + ciphertextString;
 
-    // Return as base64 for storage
-    return btoa(combined);
+    // Return as base64 for storage using libsodium's base64 encoding
+    return sodium.to_base64(sodium.from_string(combined));
   } catch (error) {
     console.error('Encryption error:', error);
     throw new Error('Encryption failed');
   }
 };
-
 
 /**
  * Decrypt sensitive data using XChaCha20-Poly1305
@@ -113,8 +113,9 @@ export const decrypt = async (ciphertext: string): Promise<string> => {
   }
 
   try {
-    // Decode base64
-    const combined = atob(ciphertext);
+    // Decode base64 using libsodium
+    const combinedBytes = sodium.from_base64(ciphertext);
+    const combined = sodium.to_string(combinedBytes);
 
     // Extract nonce length (should be 24 for XChaCha20-Poly1305)
     const nonceLength = combined.charCodeAt(0);
@@ -133,20 +134,26 @@ export const decrypt = async (ciphertext: string): Promise<string> => {
 
     // Decrypt using XChaCha20-Poly1305-IETF
     // This automatically verifies the authentication tag
-    // Signature: decrypt(ciphertext, ad, secret_nonce, key)
+    // Signature: decrypt(ciphertext, ad, public_nonce, secret_nonce, key)
     const plaintextBytes = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
       ciphertextBytes,
-      null, // No additional data (AD)
+      '', // No additional data (AD) - empty string
+      '', // Public nonce (empty string for secret nonce mode)
       nonce, // 24-byte secret nonce
-      keyBytes
+      keyBytes,
     );
 
     // Convert bytes back to string
     return sodium.to_string(plaintextBytes);
   } catch (error) {
     console.error('Decryption error:', error);
-    if (error instanceof Error && error.message.includes('verification failed')) {
-      throw new Error('Decryption failed: Authentication tag mismatch - data may be corrupted or tampered');
+    if (
+      error instanceof Error &&
+      error.message.includes('verification failed')
+    ) {
+      throw new Error(
+        'Decryption failed: Authentication tag mismatch - data may be corrupted or tampered',
+      );
     }
     throw new Error('Decryption failed: Invalid ciphertext or corrupted data');
   }
@@ -165,4 +172,3 @@ export const lockEncryptionKey = (): void => {
 export const isEncryptionKeyAvailable = (): boolean => {
   return encryptionKey !== null;
 };
-

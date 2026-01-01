@@ -3,8 +3,13 @@
  */
 
 import ReactNativeBiometrics from 'react-native-biometrics';
-import { getBiometricEnabled, getAutoLockTimeout, setLastActiveTime, getLastActiveTime } from '@/services/settings.service';
-import { lockEncryptionKey, isEncryptionKeyAvailable } from '@/services/crypto.service';
+import {
+  getBiometricEnabled,
+  getAutoLockTimeout,
+  setLastActiveTime,
+  getLastActiveTime,
+} from '@/services/settings.service';
+import { lockEncryptionKey } from '@/services/crypto.service';
 
 const rnBiometrics = new ReactNativeBiometrics({
   allowDeviceCredentials: true,
@@ -17,7 +22,7 @@ let isLocked = false;
  */
 export const isBiometricAvailable = async (): Promise<boolean> => {
   try {
-    const { available, biometryType } = await rnBiometrics.isSensorAvailable();
+    const { available } = await rnBiometrics.isSensorAvailable();
     return available;
   } catch (error) {
     console.error('Error checking biometric availability:', error);
@@ -31,7 +36,7 @@ export const isBiometricAvailable = async (): Promise<boolean> => {
 export const getBiometricType = async (): Promise<string | null> => {
   try {
     const { available, biometryType } = await rnBiometrics.isSensorAvailable();
-    return available ? biometryType : null;
+    return available ? biometryType || null : null;
   } catch (error) {
     console.error('Error getting biometric type:', error);
     return null;
@@ -41,7 +46,9 @@ export const getBiometricType = async (): Promise<string | null> => {
 /**
  * Authenticate using biometrics
  */
-export const authenticate = async (promptMessage: string = 'Authenticate to access SpendWise'): Promise<boolean> => {
+export const authenticate = async (
+  promptMessage: string = 'Authenticate to access SpendWise',
+): Promise<boolean> => {
   try {
     const { success } = await rnBiometrics.simplePrompt({
       promptMessage,
@@ -142,4 +149,3 @@ export const initBiometric = async (): Promise<void> => {
     }
   }
 };
-

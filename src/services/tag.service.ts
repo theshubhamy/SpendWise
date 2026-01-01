@@ -4,7 +4,7 @@
 
 import { getDatabase } from '@/database';
 import { QUERIES } from '@/database/queries';
-import { Tag, ExpenseTag } from '@/types';
+import { Tag } from '@/types';
 import { generateUUID } from '@/utils/uuid';
 import { TAG_COLORS } from '@/constants';
 
@@ -54,16 +54,14 @@ export const getTagById = async (id: string): Promise<Tag | null> => {
 /**
  * Create a new tag
  */
-export const createTag = async (
-  name: string,
-  color?: string,
-): Promise<Tag> => {
+export const createTag = async (name: string, color?: string): Promise<Tag> => {
   const db = getDatabase();
   const id = generateUUID();
   const now = new Date().toISOString();
 
   // Use provided color or pick a random one from palette
-  const tagColor = color || TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+  const tagColor =
+    color || TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
 
   db.execute(QUERIES.INSERT_TAG, [id, name, tagColor, now]);
 
@@ -186,4 +184,3 @@ export const setTagsForExpense = async (
     }
   }
 };
-

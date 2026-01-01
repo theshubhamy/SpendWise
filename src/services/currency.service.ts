@@ -9,7 +9,6 @@ import { Currency } from '@/types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/constants';
 import { Storage } from '@/utils/storage';
 
-
 /**
  * Get base currency
  */

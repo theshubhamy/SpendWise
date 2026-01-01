@@ -3,23 +3,22 @@
  */
 
 import { getDatabase } from '@/database';
-import { QUERIES } from '@/database/queries';
 
 interface BatchOperation {
   query: string;
-  params: any[];
+  params: unknown[];
 }
 
 class BatchWriter {
   private operations: BatchOperation[] = [];
   private batchSize: number = 50;
-  private flushTimeout: NodeJS.Timeout | null = null;
+  private flushTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly FLUSH_DELAY = 100; // ms
 
   /**
    * Add operation to batch
    */
-  add(query: string, params: any[]): void {
+  add(query: string, params: unknown[]): void {
     this.operations.push({ query, params });
 
     // Auto-flush if batch is full
@@ -87,7 +86,7 @@ export const batchWriter = new BatchWriter();
  * Execute batched write operation
  */
 export const batchWrite = async (
-  operations: Array<{ query: string; params: any[] }>,
+  operations: Array<{ query: string; params: unknown[] }>,
 ): Promise<void> => {
   const db = getDatabase();
 
@@ -100,4 +99,3 @@ export const batchWrite = async (
     }
   }
 };
-
