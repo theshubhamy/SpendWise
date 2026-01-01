@@ -9,7 +9,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 
 class MainApplication : Application(), ReactApplication {
 
-  override val reactHost: ReactHost by lazy {
+  private val _reactHost: ReactHost by lazy {
     getDefaultReactHost(
       context = applicationContext,
       packageList =
@@ -19,6 +19,9 @@ class MainApplication : Application(), ReactApplication {
         },
     )
   }
+
+  override val reactHost: ReactHost
+    get() = _reactHost
 
   override fun onCreate() {
     super.onCreate()

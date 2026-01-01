@@ -1,97 +1,373 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+## SpendWise - Expense Management Mobile App
 
-# Getting Started
+---
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 1. Project Overview
 
-## Step 1: Start Metro
+**SpendWise** is a **fully offline, privacy-focused Expense Management mobile application** built using **React Native**.
+The app allows users to track personal and group expenses, manage recurring payments, analyze spending patterns, and secure sensitive financial data — all **without any internet dependency**.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+The core philosophy of the app is:
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Offline-first reliability**
+- **High performance**
+- **Strong data privacy**
+- **Accurate financial logic**
 
-```sh
-# Using npm
-npm start
+---
 
-# OR using Yarn
-yarn start
+## 2. Key Objectives
+
+- Work 100% offline with **no backend**
+- Guarantee **data correctness and durability**
+- Provide **advanced financial features**
+- Secure sensitive data using **encryption and biometric authentication**
+- Maintain a scalable and maintainable codebase
+
+---
+
+## 3. Technology Stack
+
+### Frontend
+
+- **React Native (TypeScript)**
+- React Navigation
+- Zustand (state management)
+
+### Local Storage
+
+- **SQLite** – primary database (structured data)
+- **MMKV** – settings & flags
+- File System API – exports & backups
+
+### Security
+
+- AES-256-GCM encryption
+- Android Keystore / iOS Keychain
+- Biometric authentication (Fingerprint / Face ID)
+
+---
+
+## 4. High-Level Architecture
+
+```
+React Native App
+│
+├── UI Layer
+│   ├── Screens
+│   ├── Components
+│   └── Charts
+│
+├── Business Logic Layer
+│   ├── Expense calculations
+│   ├── Currency conversion
+│   ├── Settlement & reports
+│
+├── State Management
+│   └── In-memory store (UI cache)
+│
+├── Data Layer
+│   ├── SQLite (encrypted fields)
+│   └── MMKV
+│
+└── Security Layer
+    ├── Encryption Service
+    └── Biometric Lock
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 5. Core Features
 
-### Android
+### 5.1 Expense Management
 
-```sh
-# Using npm
-npm run android
+- Add, edit, delete expenses
+- Categorize expenses
+- Notes & metadata support
+- Instant UI updates with local persistence
 
-# OR using Yarn
-yarn android
+---
+
+### 5.2 Group Expenses & Settlement
+
+- Create expense groups
+- Add members
+- Split expenses:
+
+  - Equal
+  - Percentage
+  - Custom amounts
+
+- Automatic balance calculation
+- Settlement suggestions (who owes whom)
+
+---
+
+### 5.3 Multi-Currency Support (Offline)
+
+**Design Decision:**
+Currency conversion happens **at save time**, not at render time.
+
+#### Features
+
+- Multiple currencies per expense
+- User-defined exchange rates
+- Base currency configuration
+- Accurate historical records
+
+#### Implementation
+
+- Each expense stores:
+
+  - Original amount
+  - Currency code
+  - Converted base amount
+
+This ensures:
+
+- No recalculation errors
+- Fast analytics
+- Historical accuracy
+
+---
+
+### 5.4 Tags System
+
+Tags provide **flexible expense classification** beyond categories.
+
+#### Capabilities
+
+- Multiple tags per expense
+- Color-coded tags
+- Tag-based filtering & reports
+
+#### Data Modeling
+
+- Normalized many-to-many relationship
+- Optimized for querying & analytics
+
+---
+
+### 5.5 Undo History (Command Pattern)
+
+The app supports **undo for destructive actions**.
+
+#### Supported Actions
+
+- Undo expense delete
+- Undo expense edit
+- Undo expense add
+
+#### Implementation
+
+- Command history stored locally
+- Each action stores:
+
+  - Action type
+  - Entity type
+  - Previous state payload
+
+Undo restores data **without complex state diffing**.
+
+---
+
+## 6. Recurring Expenses
+
+### Supported Use Cases
+
+- Rent
+- EMI
+- Subscriptions
+- Utility bills
+
+### Scheduling Options
+
+- Daily
+- Weekly
+- Monthly
+- Custom intervals
+
+### Generation Strategy
+
+Recurring expenses are **generated deterministically** on:
+
+- App launch
+- App resume from background
+
+This approach:
+
+- Handles app kills
+- Handles device reboots
+- Avoids background polling
+- Saves battery
+
+Missed occurrences are automatically created on next launch.
+
+---
+
+## 7. Offline Reminders (Local Notifications)
+
+### Reminder Types
+
+- Bill due alerts
+- Subscription reminders
+- Recurring expense alerts
+
+### Key Characteristics
+
+- Uses **local notifications**
+- Works in airplane mode
+- No push services
+- Device-native scheduling
+
+Reminders are independent of expense creation and only act as **user alerts**.
+
+---
+
+## 8. Reports & Analytics (Offline)
+
+### Analytics Generated Locally
+
+- Monthly spending trends
+- Category-wise reports
+- Tag-based analysis
+- Group balance summaries
+- Highest expense insights
+
+### Technical Highlights
+
+- All aggregation done locally
+- No recomputation of currency conversions
+- Optimized queries with SQLite indexes
+
+---
+
+## 9. Encryption & Data Security
+
+### Threat Model
+
+- Physical device access
+- App data extraction
+- Unauthorized app access
+
+### Encryption Strategy
+
+- AES-256-GCM encryption
+- Encrypt sensitive fields only:
+
+  - Amounts
+  - Notes
+  - Group data
+  - Recurring schedules
+
+### Key Management
+
+- Keys stored in:
+
+  - Android Keystore
+  - iOS Keychain
+
+- Non-exportable
+- Device-bound
+
+---
+
+## 10. Biometric Lock
+
+### Features
+
+- Fingerprint / Face ID support
+- Device PIN fallback
+- App auto-lock on background
+- Configurable timeout
+
+### App Lifecycle Integration
+
+- Encryption key locked when app goes background
+- Biometric authentication required on resume
+- Decrypted data cleared from memory
+
+This prevents:
+
+- Unauthorized access
+- Screenshot leaks
+- Background snooping
+
+---
+
+## 11. Performance Optimizations
+
+- SQLite indexes on date, groupId, currencyCode
+- Batched DB writes
+- FlatList windowing
+- Memoized selectors
+- No heavy logic inside render cycles
+- Encryption handled outside UI layer
+
+---
+
+## 12. Folder Structure
+
+```
+src/
+├── screens/
+├── components/
+├── store/
+├── database/
+│   ├── schema
+│   ├── migrations
+│   └── queries
+├── services/
+│   ├── expense.service.ts
+│   ├── recurring.service.ts
+│   ├── reminder.service.ts
+│   ├── crypto.service.ts
+│   └── undo.service.ts
+├── utils/
+└── constants/
 ```
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## 13. Why Offline-Only?
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+This app intentionally avoids backend services to:
 
-```sh
-bundle install
-```
+- Guarantee instant performance
+- Eliminate sync complexity
+- Preserve user privacy
+- Reduce operational costs
+- Focus on correctness & UX
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
-```
+## 14. Resume-Ready Summary
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+> Developed a fully offline Expense Management mobile app using React Native, featuring multi-currency support, recurring expenses, local reminders, advanced analytics, and encrypted data storage. Implemented complex expense-splitting logic, undoable actions using command history, and biometric app locking for enhanced privacy. Designed a high-performance, privacy-first architecture with zero network dependency.
 
-```sh
-# Using npm
-npm run ios
+---
 
-# OR using Yarn
-yarn ios
-```
+## 15. Interview Talking Point (One Line)
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+> “The app prioritizes correctness, performance, and privacy over connectivity, which is why all business logic, analytics, encryption, and scheduling are handled entirely on-device.”
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+---
 
-## Step 3: Modify your app
+## 16. Future Enhancements
 
-Now that you have successfully run the app, let's make changes!
+- Encrypted local backups
+- CSV/PDF exports
+- Expense forecasting
+- Desktop companion app
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+---
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+If you want next, I can:
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+- Convert this into **ATS-optimized resume bullets**
+- Prepare **system design interview explanation**
+- Create **low-level design diagrams**
+- Help you brand & publish this app
 
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+You’ve built something **seriously impressive**.
+Just tell me the next step 🚀
