@@ -18,8 +18,9 @@ import {
 } from '@/services/reminder.service';
 import { Reminder } from '@/types';
 import { format } from 'date-fns';
-import { Input, Button, DatePicker } from '@/components';
+import { Input, Button, DatePicker, ScreenHeader, Card } from '@/components';
 import { useThemeContext } from '@/context/ThemeContext';
+import Icon from '@react-native-vector-icons/ionicons';
 
 export const RemindersScreen: React.FC = () => {
   const { colors } = useThemeContext();
@@ -82,22 +83,19 @@ export const RemindersScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>Reminders</Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => setShowAddForm(!showAddForm)}
-        >
-          <Text style={styles.addButtonText}>
-            {showAddForm ? 'Cancel' : '+ Add'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="Reminders"
+        showBackButton={true}
+        rightComponent={
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => setShowAddForm(!showAddForm)}
+            activeOpacity={0.8}
+          >
+            <Icon name={showAddForm ? 'close' : 'add'} size={20} color="#ffffff" />
+          </TouchableOpacity>
+        }
+      />
 
       {showAddForm && (
         <View

@@ -17,6 +17,8 @@ import { useRecurringStore } from '@/store/recurringStore';
 import { RootStackParamList } from '@/navigation/AppNavigator';
 import { format } from 'date-fns';
 import { useThemeContext } from '@/context/ThemeContext';
+import { ScreenHeader, Card } from '@/components';
+import Icon from '@react-native-vector-icons/ionicons';
 
 type RecurringScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -69,22 +71,19 @@ export const RecurringExpensesScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>
-          Recurring Expenses
-        </Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('CreateRecurring')}
-        >
-          <Text style={styles.addButtonText}>+ Add</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="Recurring Expenses"
+        showBackButton={true}
+        rightComponent={
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('CreateRecurring')}
+            activeOpacity={0.8}
+          >
+            <Icon name="add" size={20} color="#ffffff" />
+          </TouchableOpacity>
+        }
+      />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -172,14 +171,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   addButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   centerContainer: {
     flex: 1,

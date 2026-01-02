@@ -159,13 +159,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     padding: 0,
     overflow: 'visible',
+    borderRadius: 10,
   },
   iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 10,
   },
   title: {
     fontSize: 32,

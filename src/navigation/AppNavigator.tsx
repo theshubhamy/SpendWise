@@ -138,7 +138,6 @@ const MainTabNavigator: React.FC = () => {
           borderTopColor: colors.border,
           backgroundColor: colors.surface,
           paddingBottom: Math.max(insets.bottom, 4),
-          paddingTop: 4,
           height: 60 + Math.max(insets.bottom, 4),
         },
         tabBarLabelStyle: {

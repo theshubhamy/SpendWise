@@ -10,10 +10,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input, Button, Picker, DatePicker } from '@/components';
+import { Input, Button, Picker, DatePicker, ScreenHeader } from '@/components';
 import { EXPENSE_CATEGORIES, DEFAULT_SETTINGS, RECURRING_INTERVALS } from '@/constants';
 import { useRecurringStore } from '@/store/recurringStore';
 import { RecurringExpense } from '@/types';
@@ -117,22 +116,11 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top,
-            backgroundColor: colors.surface,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={[styles.cancelButton, { color: colors.primary }]}>Cancel</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Create Recurring Expense</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <ScreenHeader
+        title="Create Recurring Expense"
+        showBackButton={true}
+        onBackPress={() => navigation.goBack()}
+      />
 
       <ScrollView
         style={styles.content}
@@ -217,24 +205,6 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-  },
-  cancelButton: {
-    fontSize: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 60,
   },
   content: {
     flex: 1,

@@ -53,7 +53,7 @@ export interface ThemeColors {
 }
 
 const lightTheme: ThemeColors = {
-  background: '#f5f5f5',
+  background: '#ffffff',
   surface: '#ffffff',
   card: '#ffffff',
 

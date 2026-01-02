@@ -2,7 +2,7 @@
  * Home Screen - Modern redesigned main dashboard
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useExpenseStore } from '@/store';
+import { useGroupStore } from '@/store/groupStore';
 import { format } from 'date-fns';
 import {
   RootStackParamList,
@@ -28,6 +29,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getBaseCurrency } from '@/services/settings.service';
 import { getCurrencySymbol } from '@/services/currency.service';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  getGroupMembers,
+  calculateGroupBalances,
+} from '@/services/group.service';
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Home'>,
@@ -37,10 +42,13 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { expenses, isLoading, fetchExpenses } = useExpenseStore();
+  const { groups, fetchGroups } = useGroupStore();
   const { colors } = useThemeContext();
   const insets = useSafeAreaInsets();
-  const [baseCurrency, setBaseCurrency] = React.useState('INR');
   const [currencySymbol, setCurrencySymbol] = React.useState('₹');
+  const [youOwe, setYouOwe] = useState(0);
+  const [youAreOwed, setYouAreOwed] = useState(0);
+  const [loadingBalances, setLoadingBalances] = useState(false);
 
   const handleEdit = (expenseId: string) => {
     navigation.navigate('EditExpense', { expenseId });
@@ -49,14 +57,61 @@ export const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       const currency = getBaseCurrency();
-      setBaseCurrency(currency);
       setCurrencySymbol(getCurrencySymbol(currency));
-    }, []),
+      fetchGroups();
+    }, [fetchGroups]),
   );
 
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
+
+  // Calculate total balances across all groups
+  // Assumes the first member in each group is the current user
+  useEffect(() => {
+    const calculateTotalBalances = async () => {
+      if (groups.length === 0) {
+        setYouOwe(0);
+        setYouAreOwed(0);
+        return;
+      }
+
+      setLoadingBalances(true);
+      try {
+        let totalOwed = 0; // Negative balances (you owe)
+        let totalOwedToYou = 0; // Positive balances (you're owed)
+
+        for (const group of groups) {
+          const members = await getGroupMembers(group.id);
+          if (members.length === 0) continue;
+
+          // Calculate balances for the group
+          const balances = await calculateGroupBalances(group.id);
+
+          // Use the first member as the current user
+          const currentUserMemberId = members[0].id;
+          const userBalance = balances[currentUserMemberId] || 0;
+
+          if (userBalance < 0) {
+            // Negative balance means you owe money
+            totalOwed += Math.abs(userBalance);
+          } else if (userBalance > 0) {
+            // Positive balance means you're owed money
+            totalOwedToYou += userBalance;
+          }
+        }
+
+        setYouOwe(totalOwed);
+        setYouAreOwed(totalOwedToYou);
+      } catch (error) {
+        console.error('Error calculating balances:', error);
+      } finally {
+        setLoadingBalances(false);
+      }
+    };
+
+    calculateTotalBalances();
+  }, [groups]);
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.baseAmount, 0);
   const todayExpenses = expenses.filter(
@@ -89,114 +144,154 @@ export const HomeScreen: React.FC = () => {
           style={[
             styles.header,
             {
-              backgroundColor: colors.surface,
-              paddingTop: insets.top + 20,
+              backgroundColor: colors.background,
+              paddingTop: insets.top + 16,
             },
           ]}
         >
-          <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              {new Date().getHours() < 12
-                ? 'Good Morning'
-                : new Date().getHours() < 18
-                ? 'Good Afternoon'
-                : 'Good Evening'}
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                {new Date().getHours() < 12
+                  ? 'Good Morning'
+                  : new Date().getHours() < 18
+                  ? 'Good Afternoon'
+                  : 'Good Evening'}
+              </Text>
+              <Text style={[styles.title, { color: colors.text }]}>
+                SpendWise
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profile')}
+              style={[
+                styles.profileButton,
+                { backgroundColor: colors.primary + '15' },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Icon name="person" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Stats Cards - Horizontal Scroll */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.statsScrollContent}
+          style={styles.statsScrollView}
+        >
+          <Card variant="elevated" style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconContainer,
+                { backgroundColor: colors.primary + '15' },
+              ]}
+            >
+              <Icon name="wallet" size={20} color={colors.primary} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              Total Expenses
             </Text>
-            <Text style={[styles.title, { color: colors.text }]}>
-              SpendWise
+            <Text style={[styles.statValue, { color: colors.text }]}>
+              {currencySymbol}
+              {totalExpenses.toFixed(2)}
             </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            style={[
-              styles.profileButton,
-              { backgroundColor: colors.primary + '20' },
-            ]}
-          >
-            <Icon name="person" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+          </Card>
 
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCardWrapper}>
-            <Card variant="elevated" style={styles.statCard}>
-              <View
+          <Card variant="elevated" style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconContainer,
+                { backgroundColor: colors.success + '15' },
+              ]}
+            >
+              <Icon name="today" size={20} color={colors.success} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              Today
+            </Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>
+              {currencySymbol}
+              {todayTotal.toFixed(2)}
+            </Text>
+          </Card>
+
+          <Card variant="elevated" style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconContainer,
+                { backgroundColor: colors.secondary + '15' },
+              ]}
+            >
+              <Icon name="calendar" size={20} color={colors.secondary} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              This Month
+            </Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>
+              {currencySymbol}
+              {monthTotal.toFixed(2)}
+            </Text>
+          </Card>
+
+          <Card variant="elevated" style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconContainer,
+                { backgroundColor: colors.error + '15' },
+              ]}
+            >
+              <Icon name="arrow-down" size={20} color={colors.error} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              You Owe
+            </Text>
+            {loadingBalances ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <Text style={[styles.statValue, { color: colors.error }]}>
+                {currencySymbol}
+                {youOwe.toFixed(2)}
+              </Text>
+            )}
+          </Card>
+
+          <Card variant="elevated" style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconContainer,
+                { backgroundColor: (colors.success || colors.primary) + '15' },
+              ]}
+            >
+              <Icon
+                name="arrow-up"
+                size={20}
+                color={colors.success || colors.primary}
+              />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              You're Owed
+            </Text>
+            {loadingBalances ? (
+              <ActivityIndicator
+                size="small"
+                color={colors.success || colors.primary}
+              />
+            ) : (
+              <Text
                 style={[
-                  styles.statIconContainer,
-                  { backgroundColor: colors.primary + '15' },
+                  styles.statValue,
+                  { color: colors.success || colors.primary },
                 ]}
               >
-                <Icon name="wallet" size={24} color={colors.primary} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Total Expenses
+                {currencySymbol}
+                {youAreOwed.toFixed(2)}
               </Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {currencySymbol}{totalExpenses.toFixed(2)}
-              </Text>
-            </Card>
-          </View>
-
-          <View style={styles.statCardWrapper}>
-            <Card variant="elevated" style={styles.statCard}>
-              <View
-                style={[
-                  styles.statIconContainer,
-                  { backgroundColor: colors.success + '15' },
-                ]}
-              >
-                <Icon name="today" size={24} color={colors.success} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Today
-              </Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {currencySymbol}{todayTotal.toFixed(2)}
-              </Text>
-            </Card>
-          </View>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCardWrapper}>
-            <Card variant="elevated" style={styles.statCard}>
-              <View
-                style={[
-                  styles.statIconContainer,
-                  { backgroundColor: colors.secondary + '15' },
-                ]}
-              >
-                <Icon name="calendar" size={24} color={colors.secondary} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                This Month
-              </Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {currencySymbol}{monthTotal.toFixed(2)}
-              </Text>
-            </Card>
-          </View>
-
-          <View style={styles.statCardWrapper}>
-            <Card variant="elevated" style={styles.statCard}>
-              <View
-                style={[
-                  styles.statIconContainer,
-                  { backgroundColor: colors.accent + '15' },
-                ]}
-              >
-                <Icon name="list" size={24} color={colors.accent} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                Total Count
-              </Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {expenses.length}
-              </Text>
-            </Card>
-          </View>
-        </View>
+            )}
+          </Card>
+        </ScrollView>
 
         {/* Recent Expenses */}
         {isLoading ? (
@@ -330,61 +425,68 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 24,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
+    opacity: 0.7,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
   profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statsContainer: {
-    flexDirection: 'row',
+  statsScrollView: {
+    paddingVertical: 24,
+  },
+  statsScrollContent: {
     paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingRight: 20,
     gap: 12,
   },
-  statCardWrapper: {
-    flex: 1,
-  },
   statCard: {
-    padding: 20,
+    width: 140,
+    padding: 16,
     alignItems: 'flex-start',
+    marginRight: 0,
+    minHeight: 140,
   },
   statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   statLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    opacity: 0.7,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
+    lineHeight: 24,
   },
   centerContainer: {
     padding: 40,
@@ -432,15 +534,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
   seeAllText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
   expenseCard: {

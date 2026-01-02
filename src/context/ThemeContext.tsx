@@ -2,9 +2,15 @@
  * Theme Context - Provides theme throughout the app
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
-import { ThemeColors, ThemeMode, getThemeMode, setThemeMode, getThemeColors } from '@/theme';
+import {
+  ThemeColors,
+  ThemeMode,
+  getThemeMode,
+  setThemeMode,
+  getThemeColors,
+} from '@/theme';
 
 interface ThemeContextType {
   colors: ThemeColors;
@@ -29,7 +35,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const colors = getThemeColors(mode, systemColorScheme);
-  const isDark = mode === 'dark' || (mode === 'system' && systemColorScheme === 'dark');
+  const isDark =
+    mode === 'dark' || (mode === 'system' && systemColorScheme === 'dark');
 
   return (
     <ThemeContext.Provider value={{ colors, mode, setMode, isDark }}>
@@ -45,4 +52,3 @@ export const useThemeContext = (): ThemeContextType => {
   }
   return context;
 };
-

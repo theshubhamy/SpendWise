@@ -16,6 +16,9 @@ import {
   TagAnalysis,
 } from '@/services/analytics.service';
 import { format } from 'date-fns';
+import { ScreenHeader, Card } from '@/components';
+import { getBaseCurrency } from '@/services/settings.service';
+import { getCurrencySymbol } from '@/services/currency.service';
 
 export const ReportsScreen: React.FC = () => {
   const { expenses } = useExpenseStore();
@@ -23,6 +26,7 @@ export const ReportsScreen: React.FC = () => {
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [tagAnalysis, setTagAnalysis] = useState<TagAnalysis[]>([]);
   const [_loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol(getBaseCurrency());
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -51,19 +55,13 @@ export const ReportsScreen: React.FC = () => {
   const avgDaily = getAverageDailySpending(expenses);
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScreenHeader title="Reports & Analytics" showBackButton={true} />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          Reports & Analytics
-        </Text>
-      </View>
 
       <View style={styles.statsContainer}>
         <View
@@ -92,19 +90,14 @@ export const ReportsScreen: React.FC = () => {
             {expenses.length}
           </Text>
         </View>
-        <View
-          style={[
-            styles.statCard,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
+        <Card variant="elevated" style={styles.statCard}>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
             Avg Daily
           </Text>
           <Text style={[styles.statValue, { color: colors.text }]}>
-            ${avgDaily.toFixed(2)}
+            {currencySymbol}{avgDaily.toFixed(2)}
           </Text>
-        </View>
+        </Card>
       </View>
 
       {monthlyTrends.length > 0 && (
@@ -292,8 +285,9 @@ export const ReportsScreen: React.FC = () => {
             No expenses to analyze yet
           </Text>
         </View>
-      )}
-    </ScrollView>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -301,13 +295,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
+  scrollView: {
+    flex: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  scrollContent: {
+    paddingBottom: 20,
   },
   statsContainer: {
     flexDirection: 'row',

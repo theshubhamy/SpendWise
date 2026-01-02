@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 /**
  * Screen Header Component - Modern redesigned header
  */
@@ -37,7 +38,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   titleStyle,
   transparent = false,
 }) => {
-  const { colors, isDark } = useThemeContext();
+  const { colors } = useThemeContext();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -56,7 +57,6 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         {
           backgroundColor: transparent ? 'transparent' : colors.surface,
           paddingTop: insets.top + 8,
-          borderBottomColor: colors.border,
         },
         style,
       ]}
@@ -109,7 +109,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     minHeight: 64,
-    borderBottomWidth: 0.5,
   },
   leftSection: {
     flexDirection: 'row',
@@ -140,4 +139,3 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
 });
-

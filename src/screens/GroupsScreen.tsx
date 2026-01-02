@@ -10,6 +10,8 @@ import { useGroupStore } from '@/store/groupStore';
 import { RootStackParamList } from '@/navigation/AppNavigator';
 import { format } from 'date-fns';
 import { useThemeContext } from '@/context/ThemeContext';
+import { ScreenHeader, Card } from '@/components';
+import Icon from '@react-native-vector-icons/ionicons';
 
 type GroupsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,15 +26,19 @@ export const GroupsScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Expense Groups</Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('CreateGroup')}
-        >
-          <Text style={[styles.addButtonText, { color: '#ffffff' }]}>+ New Group</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="Expense Groups"
+        showBackButton={true}
+        rightComponent={
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('CreateGroup')}
+            activeOpacity={0.8}
+          >
+            <Icon name="add" size={20} color="#ffffff" />
+          </TouchableOpacity>
+        }
+      />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -54,31 +60,31 @@ export const GroupsScreen: React.FC = () => {
           </View>
         </ScrollView>
       ) : (
-        <ScrollView style={styles.list}>
+        <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
           {groups.map((group) => (
-            <TouchableOpacity
+            <Card
               key={group.id}
-              style={[
-                styles.groupItem,
-                {
-                  backgroundColor: colors.card,
-                  shadowColor: colors.shadow,
-                },
-              ]}
+              variant="elevated"
               onPress={() => navigation.navigate('GroupDetail', { groupId: group.id })}
-              activeOpacity={0.7}
+              style={styles.groupCard}
             >
-              <View style={styles.groupInfo}>
-                <Text style={[styles.groupName, { color: colors.text }]}>{group.name}</Text>
-                {group.description && (
-                  <Text style={[styles.groupDescription, { color: colors.textSecondary }]}>{group.description}</Text>
-                )}
-                <Text style={[styles.groupDate, { color: colors.textTertiary }]}>
-                  Created {format(new Date(group.createdAt), 'MMM dd, yyyy')}
-                </Text>
+              <View style={styles.groupContent}>
+                <View style={styles.groupInfo}>
+                  <Text style={[styles.groupName, { color: colors.text }]}>{group.name}</Text>
+                  {group.description && (
+                    <Text style={[styles.groupDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+                      {group.description}
+                    </Text>
+                  )}
+                  <Text style={[styles.groupDate, { color: colors.textTertiary }]}>
+                    Created {format(new Date(group.createdAt), 'MMM dd, yyyy')}
+                  </Text>
+                </View>
+                <View style={[styles.currencyBadge, { backgroundColor: colors.primary + '15' }]}>
+                  <Text style={[styles.groupCurrency, { color: colors.primary }]}>{group.currencyCode}</Text>
+                </View>
               </View>
-              <Text style={[styles.groupCurrency, { color: colors.primary }]}>{group.currencyCode}</Text>
-            </TouchableOpacity>
+            </Card>
           ))}
         </ScrollView>
       )}
@@ -90,25 +96,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   addButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
@@ -144,22 +137,20 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    padding: 20,
+  },
+  groupCard: {
+    marginBottom: 12,
     padding: 16,
   },
-  groupItem: {
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
+  groupContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   groupInfo: {
     flex: 1,
+    marginRight: 12,
   },
   groupName: {
     fontSize: 18,
@@ -169,12 +160,19 @@ const styles = StyleSheet.create({
   groupDescription: {
     fontSize: 14,
     marginBottom: 4,
+    opacity: 0.7,
   },
   groupDate: {
     fontSize: 12,
+    opacity: 0.6,
+  },
+  currencyBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   groupCurrency: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

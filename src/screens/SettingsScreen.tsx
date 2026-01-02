@@ -23,6 +23,7 @@ import {
 } from '@/services/settings.service';
 import { isBiometricAvailable } from '@/services/biometric.service';
 import { useThemeContext } from '@/context/ThemeContext';
+import { ScreenHeader, Card } from '@/components';
 
 type SettingsScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
@@ -62,17 +63,13 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderBottomColor: colors.border },
-        ]}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScreenHeader title="Settings" showBackButton={true} />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
-      </View>
 
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -112,9 +109,9 @@ export const SettingsScreen: React.FC = () => {
             ›
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Security
         </Text>
@@ -199,9 +196,9 @@ export const SettingsScreen: React.FC = () => {
             {autoLockTimeout} min
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Notifications
         </Text>
@@ -231,9 +228,9 @@ export const SettingsScreen: React.FC = () => {
             trackColor={{ false: colors.border, true: colors.primary }}
           />
         </View>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Organization
         </Text>
@@ -297,9 +294,9 @@ export const SettingsScreen: React.FC = () => {
             ›
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Currency
         </Text>
@@ -327,9 +324,9 @@ export const SettingsScreen: React.FC = () => {
             ›
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Data
         </Text>
@@ -361,9 +358,9 @@ export const SettingsScreen: React.FC = () => {
             ›
           </Text>
         </TouchableOpacity>
-      </View>
+      </Card>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           About
         </Text>
@@ -381,8 +378,9 @@ export const SettingsScreen: React.FC = () => {
             0.0.1
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </Card>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -390,15 +388,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
+  scrollView: {
+    flex: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  scrollContent: {
+    paddingBottom: 20,
   },
   section: {
+    marginHorizontal: 20,
     marginTop: 16,
     paddingVertical: 8,
   },

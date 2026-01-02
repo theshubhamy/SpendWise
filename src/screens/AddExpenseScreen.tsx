@@ -64,8 +64,12 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
   const [paidByMemberId, setPaidByMemberId] = useState<string | null>(null);
   const [splitType, setSplitType] = useState<SplitType>('equal');
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [percentageSplits, setPercentageSplits] = useState<Record<string, number>>({});
-  const [customAmountSplits, setCustomAmountSplits] = useState<Record<string, number>>({});
+  const [percentageSplits, setPercentageSplits] = useState<
+    Record<string, number>
+  >({});
+  const [customAmountSplits, setCustomAmountSplits] = useState<
+    Record<string, number>
+  >({});
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -105,7 +109,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
       }
     };
     loadGroupMembers();
-  }, [selectedGroupId]);
+  }, [paidByMemberId, selectedGroupId, selectedMemberIds]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -135,7 +139,16 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
     try {
       const amountNum = parseFloat(amount);
       // baseAmount will be calculated automatically by the service
-
+      // Create expense directly to get the ID (always personal, but can be split with group)
+      const newExpense = await expenseService.createExpense({
+        amount: amountNum,
+        currencyCode,
+        category,
+        description: description || undefined,
+        date,
+        groupId: selectedGroupId || undefined, // Link to group if selected
+        paidByMemberId: paidByMemberId || undefined,
+      });
       // Validate split configuration if group is selected
       if (selectedGroupId) {
         if (!paidByMemberId) {
@@ -144,7 +157,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
           return;
         }
         if (selectedMemberIds.length === 0) {
-          setErrors({ split: 'Please select at least one member to split with' });
+          setErrors({
+            split: 'Please select at least one member to split with',
+          });
           setLoading(false);
           return;
         }
@@ -156,7 +171,11 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
             0,
           );
           if (Math.abs(totalPercentage - 100) > 0.01) {
-            setErrors({ split: `Total percentage must equal 100% (currently ${totalPercentage.toFixed(2)}%)` });
+            setErrors({
+              split: `Total percentage must equal 100% (currently ${totalPercentage.toFixed(
+                2,
+              )}%)`,
+            });
             setLoading(false);
             return;
           }
@@ -168,24 +187,17 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
             (sum, id) => sum + (customAmountSplits[id] || 0),
             0,
           );
-          if (Math.abs(totalAmount - newExpense.baseAmount) > 0.01) {
-            setErrors({ split: `Total amount must equal expense amount (${newExpense.baseAmount.toFixed(2)})` });
+          if (Math.abs(totalAmount - newExpense?.baseAmount) > 0.01) {
+            setErrors({
+              split: `Total amount must equal expense amount (${newExpense.baseAmount.toFixed(
+                2,
+              )})`,
+            });
             setLoading(false);
             return;
           }
         }
       }
-
-      // Create expense directly to get the ID (always personal, but can be split with group)
-      const newExpense = await expenseService.createExpense({
-        amount: amountNum,
-        currencyCode,
-        category,
-        description: description || undefined,
-        date,
-        groupId: selectedGroupId || undefined, // Link to group if selected
-        paidByMemberId: paidByMemberId || undefined,
-      });
 
       // Add to store
       await addExpense({
@@ -275,13 +287,13 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.formSection}>
-        <Input
+          <Input
             label={`Amount (${currencyCode})`}
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="0.00"
-          keyboardType="decimal-pad"
-          error={errors.amount}
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0.00"
+            keyboardType="decimal-pad"
+            error={errors.amount}
             leftIcon={
               <Icon
                 name="cash-outline"
@@ -289,21 +301,21 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                 color={colors.textSecondary}
               />
             }
-        />
+          />
 
-        <Picker
-          label="Category"
-          selectedValue={category}
+          <Picker
+            label="Category"
+            selectedValue={category}
             onValueChange={value => setCategory(value as typeof category)}
-          items={categoryOptions}
-          error={errors.category}
-        />
+            items={categoryOptions}
+            error={errors.category}
+          />
 
-        <Input
-          label="Description"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="What did you spend on?"
+          <Input
+            label="Description"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="What did you spend on?"
             leftIcon={
               <Icon
                 name="document-text-outline"
@@ -311,20 +323,20 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                 color={colors.textSecondary}
               />
             }
-        />
+          />
 
-        <DatePicker
-          label="Date"
-          value={date}
-          onValueChange={setDate}
-          error={errors.date}
-        />
+          <DatePicker
+            label="Date"
+            value={date}
+            onValueChange={setDate}
+            error={errors.date}
+          />
 
-        <TagSelector
-          label="Tags (Optional)"
-          selectedTagIds={selectedTagIds}
-          onSelectionChange={setSelectedTagIds}
-        />
+          <TagSelector
+            label="Tags (Optional)"
+            selectedTagIds={selectedTagIds}
+            onSelectionChange={setSelectedTagIds}
+          />
 
           <Picker
             label="Split with Group (Optional)"
@@ -367,7 +379,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
               />
 
               <View style={styles.memberSelectionContainer}>
-                <Text style={[styles.memberSelectionLabel, { color: colors.text }]}>
+                <Text
+                  style={[styles.memberSelectionLabel, { color: colors.text }]}
+                >
                   Select Members to Split With
                 </Text>
                 {groupMembers.map(member => (
@@ -376,22 +390,30 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                       style={styles.memberCheckbox}
                       onPress={() => {
                         if (selectedMemberIds.includes(member.id)) {
-                          setSelectedMemberIds(selectedMemberIds.filter(id => id !== member.id));
+                          setSelectedMemberIds(
+                            selectedMemberIds.filter(id => id !== member.id),
+                          );
                           // Remove from splits
                           const newPercentageSplits = { ...percentageSplits };
                           delete newPercentageSplits[member.id];
                           setPercentageSplits(newPercentageSplits);
-                          const newCustomAmountSplits = { ...customAmountSplits };
+                          const newCustomAmountSplits = {
+                            ...customAmountSplits,
+                          };
                           delete newCustomAmountSplits[member.id];
                           setCustomAmountSplits(newCustomAmountSplits);
                         } else {
-                          setSelectedMemberIds([...selectedMemberIds, member.id]);
+                          setSelectedMemberIds([
+                            ...selectedMemberIds,
+                            member.id,
+                          ]);
                           // Initialize with default values
                           if (splitType === 'percentage') {
                             const totalSelected = selectedMemberIds.length + 1;
                             const perMember = 100 / totalSelected;
                             // Redistribute percentages
-                            const newPercentageSplits: Record<string, number> = {};
+                            const newPercentageSplits: Record<string, number> =
+                              {};
                             [...selectedMemberIds, member.id].forEach(id => {
                               newPercentageSplits[id] = perMember;
                             });
@@ -401,7 +423,10 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                             const totalSelected = selectedMemberIds.length + 1;
                             const perMember = totalAmount / totalSelected;
                             // Redistribute amounts
-                            const newCustomAmountSplits: Record<string, number> = {};
+                            const newCustomAmountSplits: Record<
+                              string,
+                              number
+                            > = {};
                             [...selectedMemberIds, member.id].forEach(id => {
                               newCustomAmountSplits[id] = perMember;
                             });
@@ -412,46 +437,74 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                       activeOpacity={0.7}
                     >
                       <Icon
-                        name={selectedMemberIds.includes(member.id) ? 'checkbox' : 'square-outline'}
+                        name={
+                          selectedMemberIds.includes(member.id)
+                            ? 'checkbox'
+                            : 'square-outline'
+                        }
                         size={24}
-                        color={selectedMemberIds.includes(member.id) ? colors.primary : colors.textSecondary}
+                        color={
+                          selectedMemberIds.includes(member.id)
+                            ? colors.primary
+                            : colors.textSecondary
+                        }
                       />
                       <Text style={[styles.memberName, { color: colors.text }]}>
                         {member.name}
                       </Text>
                     </TouchableOpacity>
-                    {selectedMemberIds.includes(member.id) && splitType === 'percentage' && (
-                      <Input
-                        value={percentageSplits[member.id]?.toFixed(2) || '0'}
-                        onChangeText={text => {
-                          const value = parseFloat(text) || 0;
-                          setPercentageSplits({
-                            ...percentageSplits,
-                            [member.id]: Math.max(0, Math.min(100, value)), // Clamp between 0-100
-                          });
-                        }}
-                        placeholder="0"
-                        keyboardType="decimal-pad"
-                        style={styles.percentageInput}
-                        rightIcon={<Text style={{ color: colors.textSecondary, fontSize: 14 }}>%</Text>}
-                      />
-                    )}
-                    {selectedMemberIds.includes(member.id) && splitType === 'custom' && (
-                      <Input
-                        value={customAmountSplits[member.id]?.toFixed(2) || '0.00'}
-                        onChangeText={text => {
-                          const value = parseFloat(text) || 0;
-                          setCustomAmountSplits({
-                            ...customAmountSplits,
-                            [member.id]: Math.max(0, value), // No negative amounts
-                          });
-                        }}
-                        placeholder="0.00"
-                        keyboardType="decimal-pad"
-                        style={styles.amountInput}
-                        rightIcon={<Text style={{ color: colors.textSecondary, fontSize: 14 }}>{currencyCode}</Text>}
-                      />
-                    )}
+                    {selectedMemberIds.includes(member.id) &&
+                      splitType === 'percentage' && (
+                        <Input
+                          value={percentageSplits[member.id]?.toFixed(2) || '0'}
+                          onChangeText={text => {
+                            const value = parseFloat(text) || 0;
+                            setPercentageSplits({
+                              ...percentageSplits,
+                              [member.id]: Math.max(0, Math.min(100, value)), // Clamp between 0-100
+                            });
+                          }}
+                          placeholder="0"
+                          keyboardType="decimal-pad"
+                          style={styles.percentageInput}
+                          rightIcon={
+                            <Text
+                              style={{
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              %
+                            </Text>
+                          }
+                        />
+                      )}
+                    {selectedMemberIds.includes(member.id) &&
+                      splitType === 'custom' && (
+                        <Input
+                          value={
+                            customAmountSplits[member.id]?.toFixed(2) || '0.00'
+                          }
+                          onChangeText={text => {
+                            const value = parseFloat(text) || 0;
+                            setCustomAmountSplits({
+                              ...customAmountSplits,
+                              [member.id]: Math.max(0, value), // No negative amounts
+                            });
+                          }}
+                          placeholder="0.00"
+                          keyboardType="decimal-pad"
+                          style={styles.amountInput}
+                          rightIcon={
+                            <Text
+                              style={{
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              {currencyCode}
+                            </Text>
+                          }
+                        />
+                      )}
                   </View>
                 ))}
                 {splitType === 'percentage' && selectedMemberIds.length > 0 && (
@@ -462,49 +515,79 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                         {
                           color:
                             Math.abs(
-                              selectedMemberIds.reduce((sum, id) => sum + (percentageSplits[id] || 0), 0) - 100,
+                              selectedMemberIds.reduce(
+                                (sum, id) => sum + (percentageSplits[id] || 0),
+                                0,
+                              ) - 100,
                             ) < 0.01
-                              ? (colors.success || colors.primary)
+                              ? colors.success || colors.primary
                               : colors.error,
                         },
                       ]}
                     >
-                      Total: {selectedMemberIds.reduce((sum, id) => sum + (percentageSplits[id] || 0), 0).toFixed(2)}%
-                      {Math.abs(selectedMemberIds.reduce((sum, id) => sum + (percentageSplits[id] || 0), 0) - 100) >
-                        0.01 && ' (Must equal 100%)'}
-                    </Text>
-                  </View>
-                )}
-                {splitType === 'custom' && selectedMemberIds.length > 0 && amount && (
-                  <View style={styles.totalContainer}>
-                    <Text
-                      style={[
-                        styles.totalLabel,
-                        {
-                          color:
-                            Math.abs(
-                              selectedMemberIds.reduce((sum, id) => sum + (customAmountSplits[id] || 0), 0) -
-                                parseFloat(amount),
-                            ) < 0.01
-                              ? (colors.success || colors.primary)
-                              : colors.error,
-                        },
-                      ]}
-                    >
-                      Total: {selectedMemberIds.reduce((sum, id) => sum + (customAmountSplits[id] || 0), 0).toFixed(2)}{' '}
-                      {currencyCode}
+                      Total:{' '}
+                      {selectedMemberIds
+                        .reduce(
+                          (sum, id) => sum + (percentageSplits[id] || 0),
+                          0,
+                        )
+                        .toFixed(2)}
+                      %
                       {Math.abs(
-                        selectedMemberIds.reduce((sum, id) => sum + (customAmountSplits[id] || 0), 0) -
-                          parseFloat(amount),
-                      ) > 0.01 && ` (Must equal ${parseFloat(amount).toFixed(2)} ${currencyCode})`}
+                        selectedMemberIds.reduce(
+                          (sum, id) => sum + (percentageSplits[id] || 0),
+                          0,
+                        ) - 100,
+                      ) > 0.01 && ' (Must equal 100%)'}
                     </Text>
                   </View>
                 )}
+                {splitType === 'custom' &&
+                  selectedMemberIds.length > 0 &&
+                  amount && (
+                    <View style={styles.totalContainer}>
+                      <Text
+                        style={[
+                          styles.totalLabel,
+                          {
+                            color:
+                              Math.abs(
+                                selectedMemberIds.reduce(
+                                  (sum, id) =>
+                                    sum + (customAmountSplits[id] || 0),
+                                  0,
+                                ) - parseFloat(amount),
+                              ) < 0.01
+                                ? colors.success || colors.primary
+                                : colors.error,
+                          },
+                        ]}
+                      >
+                        Total:{' '}
+                        {selectedMemberIds
+                          .reduce(
+                            (sum, id) => sum + (customAmountSplits[id] || 0),
+                            0,
+                          )
+                          .toFixed(2)}{' '}
+                        {currencyCode}
+                        {Math.abs(
+                          selectedMemberIds.reduce(
+                            (sum, id) => sum + (customAmountSplits[id] || 0),
+                            0,
+                          ) - parseFloat(amount),
+                        ) > 0.01 &&
+                          ` (Must equal ${parseFloat(amount).toFixed(
+                            2,
+                          )} ${currencyCode})`}
+                      </Text>
+                    </View>
+                  )}
               </View>
             </>
           )}
 
-        {errors.submit && (
+          {errors.submit && (
             <View
               style={[
                 styles.errorContainer,
@@ -516,18 +599,18 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
                 {errors.submit}
               </Text>
             </View>
-        )}
+          )}
 
-        <Button
-          title="Add Expense"
-          onPress={handleSubmit}
-          loading={loading}
-          style={styles.submitButton}
+          <Button
+            title="Add Expense"
+            onPress={handleSubmit}
+            loading={loading}
+            style={styles.submitButton}
             size="large"
             leftIcon={
               <Icon name="checkmark-circle" size={20} color="#ffffff" />
             }
-        />
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -594,12 +677,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   percentageInput: {
+    fontSize: 14,
     width: 100,
     marginLeft: 12,
   },
   amountInput: {
     width: 120,
     marginLeft: 12,
+    fontSize: 14,
   },
   totalContainer: {
     marginTop: 8,

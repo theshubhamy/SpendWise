@@ -147,7 +147,10 @@ function AppContent() {
   if (isLocked) {
     return (
       <SafeAreaProvider>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={colors.background}
+        />
         <LockScreen onUnlock={handleUnlock} />
       </SafeAreaProvider>
     );
@@ -155,7 +158,10 @@ function AppContent() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
       <AppNavigator />
     </SafeAreaProvider>
   );
