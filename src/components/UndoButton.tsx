@@ -3,7 +3,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import { useExpenseStore } from '@/store';
 import { useThemeContext } from '@/context/ThemeContext';
 import Icon from '@react-native-vector-icons/ionicons';
@@ -12,18 +18,36 @@ interface UndoButtonProps {
   message?: string;
   onUndo?: () => Promise<boolean>;
   autoHideDuration?: number;
+  visible?: boolean; // Control visibility from parent
 }
 
 export const UndoButton: React.FC<UndoButtonProps> = ({
   message = 'Action completed',
   onUndo,
   autoHideDuration = 5000,
+  visible: visibleProp = false,
 }) => {
-  const { colors, isDark } = useThemeContext();
+  const { colors } = useThemeContext();
   const { undoLastAction } = useExpenseStore();
   const [visible, setVisible] = useState(false);
   const [slideAnim] = useState(new Animated.Value(100));
   const [fadeAnim] = useState(new Animated.Value(0));
+
+  // Sync internal state with prop and handle auto-hide
+  useEffect(() => {
+    if (visibleProp) {
+      setVisible(true);
+
+      // Auto-hide after duration
+      const timer = setTimeout(() => {
+        setVisible(false);
+      }, autoHideDuration);
+
+      return () => clearTimeout(timer);
+    } else {
+      setVisible(false);
+    }
+  }, [visibleProp, autoHideDuration]);
 
   useEffect(() => {
     if (visible) {
@@ -63,10 +87,6 @@ export const UndoButton: React.FC<UndoButtonProps> = ({
     }
   }, [visible, slideAnim, fadeAnim, autoHideDuration]);
 
-  const showUndo = () => {
-    setVisible(true);
-  };
-
   const hideUndo = () => {
     setVisible(false);
   };
@@ -96,9 +116,7 @@ export const UndoButton: React.FC<UndoButtonProps> = ({
     >
       <View style={styles.content}>
         <Icon name="checkmark-circle" size={20} color={colors.success} />
-        <Text style={[styles.message, { color: colors.text }]}>
-          {message}
-        </Text>
+        <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
       </View>
       <TouchableOpacity
         onPress={handleUndo}
@@ -150,4 +168,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
-

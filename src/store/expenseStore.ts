@@ -12,7 +12,7 @@ interface ExpenseState {
   isLoading: boolean;
   error: string | null;
   fetchExpenses: () => Promise<void>;
-  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'>) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'>) => Promise<Expense>;
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   getExpenseById: (id: string) => Expense | undefined;
@@ -42,8 +42,10 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
       }));
       // Save undo action
       await saveUndoAction('add', 'expense', newExpense);
+      return newExpense;
     } catch (error) {
       set({ error: (error as Error).message });
+      throw error;
     }
   },
 

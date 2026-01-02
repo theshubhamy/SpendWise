@@ -255,13 +255,12 @@ export const ExpensesScreen: React.FC = () => {
         />
       )}
 
-      {showUndo && (
-        <UndoButton
-          message="Expense deleted"
-          onUndo={handleUndo}
-          autoHideDuration={5000}
-        />
-      )}
+      <UndoButton
+        message="Expense deleted"
+        onUndo={handleUndo}
+        autoHideDuration={5000}
+        visible={showUndo}
+      />
     </View>
   );
 };
