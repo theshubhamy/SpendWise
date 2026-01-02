@@ -36,7 +36,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const [showPicker, setShowPicker] = useState(false);
   const date = value ? new Date(value) : new Date();
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleDateChange = (
+    event: { type: string; nativeEvent: { timestamp: number } },
+    selectedDate?: Date,
+  ) => {
     if (Platform.OS === 'android') {
       setShowPicker(false);
     }

@@ -106,7 +106,7 @@ export const getPendingReminders = async (): Promise<Reminder[]> => {
 
   const reminders: Reminder[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       reminders.push({
         id: row.id as string,

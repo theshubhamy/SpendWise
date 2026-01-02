@@ -17,7 +17,7 @@ export const getAllTags = async (): Promise<Tag[]> => {
 
   const tags: Tag[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       tags.push({
         id: row.id as string,
@@ -39,7 +39,7 @@ export const getTagById = async (id: string): Promise<Tag | null> => {
   const result = db.query(QUERIES.GET_TAG_BY_ID, [id]);
 
   if (result.rows && result.rows.length > 0) {
-    const row = result.rows[0];
+    const row = result.rows[0] as Record<string, unknown>;
     return {
       id: row.id as string,
       name: row.name as string,
@@ -122,7 +122,7 @@ export const getTagsForExpense = async (expenseId: string): Promise<Tag[]> => {
 
   const tags: Tag[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       tags.push({
         id: row.id as string,

@@ -77,12 +77,13 @@ export const encrypt = async (plaintext: string): Promise<string> => {
 
     // Encrypt using XChaCha20-Poly1305-IETF
     // This includes authentication tag automatically
-    // Signature: encrypt(message, ad, public_nonce, secret_nonce, key)
+    // Signature: encrypt(message, additional_data, secret_nonce, public_nonce, key)
+    // secret_nonce should be null (not used in this mode)
     const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       messageBytes,
-      '', // No additional data (AD) - empty string
-      '', // Public nonce (empty string for secret nonce mode)
-      nonce, // 24-byte secret nonce
+      null, // No additional data (AD)
+      null, // secret_nonce (null - not used in this mode)
+      nonce, // 24-byte public nonce (npub)
       keyBytes,
     );
 
@@ -134,12 +135,14 @@ export const decrypt = async (ciphertext: string): Promise<string> => {
 
     // Decrypt using XChaCha20-Poly1305-IETF
     // This automatically verifies the authentication tag
-    // Signature: decrypt(ciphertext, ad, public_nonce, secret_nonce, key)
+    // Signature: decrypt(secret_nonce, ciphertext, additional_data, public_nonce, key)
+    // Note: Parameter order is different from encrypt!
+    // secret_nonce should be null (not used in this mode)
     const plaintextBytes = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+      null, // secret_nonce (null - not used in this mode)
       ciphertextBytes,
-      '', // No additional data (AD) - empty string
-      '', // Public nonce (empty string for secret nonce mode)
-      nonce, // 24-byte secret nonce
+      null, // No additional data (AD)
+      nonce, // 24-byte public nonce (npub)
       keyBytes,
     );
 

@@ -51,7 +51,7 @@ export const getUndoHistory = async (
 
   const actions: UndoAction[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       actions.push({
         id: row.id as string,

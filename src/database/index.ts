@@ -38,12 +38,12 @@ export const initDatabase = async (): Promise<void> => {
 
 // Extended database interface with query helper for backward compatibility
 interface DatabaseWithQuery extends QuickSQLiteConnection {
-  query: (query: string, params?: any[]) => QueryResult & {
+  query: (query: string, params?: unknown[]) => QueryResult & {
     rows: {
       length: number;
-      _array: any[];
-      item: (idx: number) => any;
-      [index: number]: any;
+      _array: unknown[];
+      item: (idx: number) => unknown;
+      [index: number]: unknown;
     } | undefined;
   };
 }
@@ -56,7 +56,7 @@ export const getDatabase = (): DatabaseWithQuery => {
   // Add query method that uses execute and normalizes result format
   return {
     ...db,
-    query: (query: string, params?: any[]) => {
+    query: (query: string, params?: unknown[]) => {
       const result = db!.execute(query, params);
       // Normalize result.rows to support both array access and _array access
       if (result.rows) {
@@ -74,7 +74,7 @@ export const getDatabase = (): DatabaseWithQuery => {
         });
         return {
           ...result,
-          rows: normalizedRows as any,
+          rows: normalizedRows as typeof rows,
         };
       }
       return result;

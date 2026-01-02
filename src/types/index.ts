@@ -99,7 +99,7 @@ export interface UndoAction {
   id: string;
   type: 'delete' | 'edit' | 'add';
   entityType: 'expense' | 'group' | 'recurring' | 'tag';
-  payload: any; // Previous state
+  payload: unknown; // Previous state (serialized as JSON)
   timestamp: string;
 }
 
@@ -109,4 +109,3 @@ export interface AppSettings {
   autoLockTimeout: number; // in minutes
   theme: 'light' | 'dark' | 'system';
 }
-

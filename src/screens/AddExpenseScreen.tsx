@@ -20,9 +20,13 @@ import { setTagsForExpense } from '@/services/tag.service';
 import { format } from 'date-fns';
 import { useThemeContext } from '@/context/ThemeContext';
 
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '@/navigation/AppNavigator';
+
 interface AddExpenseScreenProps {
-  navigation: any;
-  route: any;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'AddExpense'>;
+  route: RouteProp<RootStackParamList, 'AddExpense'>;
 }
 
 export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({

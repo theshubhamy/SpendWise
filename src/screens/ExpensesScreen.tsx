@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { RootStackParamList } from '@/navigation/AppNavigator';
 import { undoLastAction } from '@/services/undo.service';
 import { useThemeContext } from '@/context/ThemeContext';
+import { Tag } from '@/types';
 
 type ExpensesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,14 +28,14 @@ export const ExpensesScreen: React.FC = () => {
   const navigation = useNavigation<ExpensesScreenNavigationProp>();
   const { expenses, isLoading, fetchExpenses, deleteExpense } = useExpenseStore();
   const { colors } = useThemeContext();
-  const [expenseTags, setExpenseTags] = useState<Record<string, any[]>>({});
+  const [expenseTags, setExpenseTags] = useState<Record<string, Tag[]>>({});
   const [showUndo, setShowUndo] = useState(false);
   const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Load tags for all expenses
     const loadTags = async () => {
-      const tagsMap: Record<string, any[]> = {};
+      const tagsMap: Record<string, Tag[]> = {};
       for (const expense of expenses) {
         const tags = await getTagsForExpense(expense.id);
         tagsMap[expense.id] = tags;
