@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { ScreenHeader, Card } from '@/components';
 import { getBaseCurrency } from '@/services/settings.service';
 import { getCurrencySymbol } from '@/services/currency.service';
+import Icon from '@react-native-vector-icons/ionicons';
 
 export const ReportsScreen: React.FC = () => {
   const { expenses } = useExpenseStore();
@@ -64,33 +65,31 @@ export const ReportsScreen: React.FC = () => {
       >
 
       <View style={styles.statsContainer}>
-        <View
-          style={[
-            styles.statCard,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
+        <Card variant="elevated" style={styles.statCard}>
+          <View
+            style={[
+              styles.statIconContainer,
+              { backgroundColor: colors.primary + '15' },
+            ]}
+          >
+            <Icon name="wallet" size={20} color={colors.primary} />
+          </View>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
             Total Spent
           </Text>
           <Text style={[styles.statValue, { color: colors.text }]}>
-            ${totalExpenses.toFixed(2)}
+            {currencySymbol}{totalExpenses.toFixed(2)}
           </Text>
-        </View>
-        <View
-          style={[
-            styles.statCard,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            Total Expenses
-          </Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>
-            {expenses.length}
-          </Text>
-        </View>
+        </Card>
         <Card variant="elevated" style={styles.statCard}>
+          <View
+            style={[
+              styles.statIconContainer,
+              { backgroundColor: colors.success + '15' },
+            ]}
+          >
+            <Icon name="calendar" size={20} color={colors.success} />
+          </View>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
             Avg Daily
           </Text>
@@ -101,14 +100,17 @@ export const ReportsScreen: React.FC = () => {
       </View>
 
       {monthlyTrends.length > 0 && (
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Monthly Trends (Last 6 Months)
+        <Card variant="elevated" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="trending-up" size={24} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Monthly Trends
+            </Text>
+          </View>
+          <Text
+            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
+          >
+            Last 6 Months
           </Text>
           {monthlyTrends.map(trend => (
             <View
@@ -129,23 +131,21 @@ export const ReportsScreen: React.FC = () => {
                 </Text>
               </View>
               <Text style={[styles.trendAmount, { color: colors.text }]}>
-                ${trend.total.toFixed(2)}
+                {currencySymbol}{trend.total.toFixed(2)}
               </Text>
             </View>
           ))}
-        </View>
+        </Card>
       )}
 
       {categoryAnalysis.length > 0 && (
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Category Breakdown
-          </Text>
+        <Card variant="elevated" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="pie-chart" size={24} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Category Breakdown
+            </Text>
+          </View>
           {categoryAnalysis.slice(0, 10).map(item => (
             <View
               key={item.category}
@@ -177,7 +177,7 @@ export const ReportsScreen: React.FC = () => {
               </View>
               <View style={styles.categoryRight}>
                 <Text style={[styles.categoryAmount, { color: colors.text }]}>
-                  ${item.total.toFixed(2)}
+                  {currencySymbol}{item.total.toFixed(2)}
                 </Text>
                 <Text
                   style={[
@@ -190,19 +190,17 @@ export const ReportsScreen: React.FC = () => {
               </View>
             </View>
           ))}
-        </View>
+        </Card>
       )}
 
       {tagAnalysis.length > 0 && (
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Tag-Based Analysis
-          </Text>
+        <Card variant="elevated" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="pricetag" size={24} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Tag-Based Analysis
+            </Text>
+          </View>
           {tagAnalysis.map(tag => (
             <View
               key={tag.tagId}
@@ -223,23 +221,21 @@ export const ReportsScreen: React.FC = () => {
                 </Text>
               </View>
               <Text style={[styles.tagAmount, { color: colors.text }]}>
-                ${tag.total.toFixed(2)}
+                {currencySymbol}{tag.total.toFixed(2)}
               </Text>
             </View>
           ))}
-        </View>
+        </Card>
       )}
 
       {highestExpenses.length > 0 && (
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Highest Expenses
-          </Text>
+        <Card variant="elevated" style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="arrow-up-circle" size={24} color={colors.error} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Highest Expenses
+            </Text>
+          </View>
           {highestExpenses.map(expense => (
             <View
               key={expense.id}
@@ -257,6 +253,7 @@ export const ReportsScreen: React.FC = () => {
                     styles.expenseDescription,
                     { color: colors.textSecondary },
                   ]}
+                  numberOfLines={1}
                 >
                   {expense.description || 'No description'}
                 </Text>
@@ -267,25 +264,30 @@ export const ReportsScreen: React.FC = () => {
                 </Text>
               </View>
               <Text style={[styles.expenseAmount, { color: colors.text }]}>
-                ${expense.baseAmount.toFixed(2)}
+                {currencySymbol}{expense.baseAmount.toFixed(2)}
               </Text>
             </View>
           ))}
-        </View>
+        </Card>
       )}
 
       {expenses.length === 0 && (
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.surface, shadowColor: colors.shadow },
-          ]}
-        >
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+        <Card variant="elevated" style={styles.emptyCard}>
+          <Icon
+            name="bar-chart-outline"
+            size={64}
+            color={colors.textTertiary}
+          />
+          <Text style={[styles.emptyText, { color: colors.text }]}>
             No expenses to analyze yet
           </Text>
-        </View>
-        )}
+          <Text
+            style={[styles.emptySubtext, { color: colors.textSecondary }]}
+          >
+            Start adding expenses to see detailed analytics and insights
+          </Text>
+        </Card>
+      )}
       </ScrollView>
     </View>
   );
@@ -299,44 +301,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    padding: 20,
+    paddingBottom: 40,
   },
   statsContainer: {
     flexDirection: 'row',
-    padding: 16,
     gap: 12,
+    marginBottom: 8,
   },
   statCard: {
     flex: 1,
     padding: 16,
-    borderRadius: 8,
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    minHeight: 120,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   statLabel: {
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    opacity: 0.7,
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   section: {
-    margin: 16,
+    marginBottom: 16,
     padding: 16,
-    borderRadius: 8,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 16,
+    opacity: 0.7,
   },
   categoryItem: {
     flexDirection: 'row',
@@ -352,10 +370,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  emptyCard: {
+    marginBottom: 16,
+    padding: 40,
+    alignItems: 'center',
+  },
   emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: 20,
+    opacity: 0.7,
   },
   trendItem: {
     flexDirection: 'row',
@@ -456,3 +486,4 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
 });
+
