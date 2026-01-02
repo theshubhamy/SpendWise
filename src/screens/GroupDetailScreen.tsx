@@ -20,6 +20,7 @@ import {
   calculateGroupBalances,
   getSettlementSuggestions,
 } from '@/services/group.service';
+import { Button } from '@/components';
 import { GroupMember } from '@/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/navigation/AppNavigator';
@@ -240,6 +241,15 @@ export const GroupDetailScreen: React.FC<GroupDetailScreenProps> = ({
       )}
 
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <Button
+          title="Settle Up"
+          onPress={() => navigation.navigate('SettleUp', { groupId })}
+          size="large"
+          style={styles.settleButton}
+        />
+      </View>
+
+      <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Balances
         </Text>
@@ -369,5 +379,8 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     padding: 40,
+  },
+  settleButton: {
+    marginTop: 8,
   },
 });

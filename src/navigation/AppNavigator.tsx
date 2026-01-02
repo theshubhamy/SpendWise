@@ -19,6 +19,7 @@ import { GroupDetailScreen } from '@/screens/GroupDetailScreen';
 import { RecurringExpensesScreen } from '@/screens/RecurringExpensesScreen';
 import { CreateRecurringScreen } from '@/screens/CreateRecurringScreen';
 import { RemindersScreen } from '@/screens/RemindersScreen';
+import { SettleUpScreen } from '@/screens/SettleUpScreen';
 import Icon from '@react-native-vector-icons/ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '@/context/ThemeContext';
@@ -34,6 +35,7 @@ export type RootStackParamList = {
   CreateRecurring: undefined;
   RecurringExpenses: undefined;
   Reminders: undefined;
+  SettleUp: { groupId: string };
 };
 
 // Bottom Tab Navigator Types
@@ -288,6 +290,17 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen
           name="Reminders"
           component={RemindersScreen}
+          options={{
+            presentation: 'card',
+            headerShown: false,
+            contentStyle: {
+              paddingBottom: insets.bottom,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="SettleUp"
+          component={SettleUpScreen}
           options={{
             presentation: 'card',
             headerShown: false,

@@ -2,7 +2,7 @@
  * Expenses Screen - Modern redesigned list of all expenses
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,8 @@ export const ExpensesScreen: React.FC = () => {
   const { colors } = useThemeContext();
   const [expenseTags, setExpenseTags] = useState<Record<string, Tag[]>>({});
   const [showUndo, setShowUndo] = useState(false);
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [filter, setFilter] = useState<'all' | 'personal' | 'group'>('all');
 
   useEffect(() => {
     // Load tags for all expenses
@@ -73,8 +75,15 @@ export const ExpensesScreen: React.FC = () => {
             try {
               await deleteExpense(expenseId);
               await fetchExpenses();
-              // Show undo option (UndoButton handles auto-hide internally)
+              // Show undo option
               setShowUndo(true);
+              if (undoTimeoutRef.current) {
+                clearTimeout(undoTimeoutRef.current);
+              }
+              undoTimeoutRef.current = setTimeout(
+                () => setShowUndo(false),
+                5000,
+              );
             } catch {
               Alert.alert(
                 'Error',
@@ -107,10 +116,20 @@ export const ExpensesScreen: React.FC = () => {
     return false;
   };
 
+  // Filter expenses based on selected filter
+  const filteredExpenses = expenses.filter(expense => {
+    if (filter === 'personal') {
+      return !expense.groupId; // Personal expenses have no groupId
+    } else if (filter === 'group') {
+      return !!expense.groupId; // Group expenses have a groupId
+    }
+    return true; // 'all' shows everything
+  });
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader
-        title="All Expenses"
+        title={filter === 'all' ? 'All Expenses' : filter === 'personal' ? 'Personal Expenses' : 'Group Expenses'}
         showBackButton={true}
         rightComponent={
           <TouchableOpacity
@@ -123,6 +142,80 @@ export const ExpensesScreen: React.FC = () => {
         }
       />
 
+      {/* Filter Tabs */}
+      <View style={[styles.filterContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.filterTab,
+            filter === 'all' && { backgroundColor: colors.primary + '20' },
+          ]}
+          onPress={() => setFilter('all')}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.filterText,
+              {
+                color: filter === 'all' ? colors.primary : colors.textSecondary,
+                fontWeight: filter === 'all' ? '600' : '500',
+              },
+            ]}
+          >
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.filterTab,
+            filter === 'personal' && { backgroundColor: colors.primary + '20' },
+          ]}
+          onPress={() => setFilter('personal')}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={filter === 'personal' ? 'person' : 'person-outline'}
+            size={16}
+            color={filter === 'personal' ? colors.primary : colors.textSecondary}
+          />
+          <Text
+            style={[
+              styles.filterText,
+              {
+                color: filter === 'personal' ? colors.primary : colors.textSecondary,
+                fontWeight: filter === 'personal' ? '600' : '500',
+              },
+            ]}
+          >
+            Personal
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.filterTab,
+            filter === 'group' && { backgroundColor: colors.primary + '20' },
+          ]}
+          onPress={() => setFilter('group')}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={filter === 'group' ? 'people' : 'people-outline'}
+            size={16}
+            color={filter === 'group' ? colors.primary : colors.textSecondary}
+          />
+          <Text
+            style={[
+              styles.filterText,
+              {
+                color: filter === 'group' ? colors.primary : colors.textSecondary,
+                fontWeight: filter === 'group' ? '600' : '500',
+              },
+            ]}
+          >
+            Group
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -130,14 +223,32 @@ export const ExpensesScreen: React.FC = () => {
             Loading expenses...
           </Text>
         </View>
-      ) : expenses.length === 0 ? (
+      ) : filteredExpenses.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Icon name="receipt-outline" size={80} color={colors.textTertiary} />
+          <Icon
+            name={
+              filter === 'personal'
+                ? 'person-outline'
+                : filter === 'group'
+                  ? 'people-outline'
+                  : 'receipt-outline'
+            }
+            size={80}
+            color={colors.textTertiary}
+          />
           <Text style={[styles.emptyText, { color: colors.text }]}>
-            No expenses yet
+            {filter === 'personal'
+              ? 'No personal expenses yet'
+              : filter === 'group'
+                ? 'No group expenses yet'
+                : 'No expenses yet'}
           </Text>
           <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            Start tracking your expenses!
+            {filter === 'personal'
+              ? 'Personal expenses are not split with any group'
+              : filter === 'group'
+                ? 'Group expenses are split with group members'
+                : 'Start tracking your expenses!'}
           </Text>
           <TouchableOpacity
             style={[styles.addFirstButton, { backgroundColor: colors.primary }]}
@@ -149,7 +260,7 @@ export const ExpensesScreen: React.FC = () => {
         </View>
       ) : (
         <FlatList
-          data={expenses}
+          data={filteredExpenses}
           keyExtractor={item => item.id}
           renderItem={({ item: expense }) => (
             <Card
@@ -247,13 +358,13 @@ export const ExpensesScreen: React.FC = () => {
         />
       )}
 
-      <UndoButton
-        message="Expense deleted"
-        onUndo={handleUndo}
-        autoHideDuration={5000}
-        visible={showUndo}
-        onHide={() => setShowUndo(false)}
-      />
+      {showUndo && (
+        <UndoButton
+          message="Expense deleted"
+          onUndo={handleUndo}
+          autoHideDuration={5000}
+        />
+      )}
     </View>
   );
 };
@@ -372,5 +483,25 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     padding: 4,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    gap: 8,
+  },
+  filterTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 6,
+  },
+  filterText: {
+    fontSize: 14,
   },
 });

@@ -338,6 +338,7 @@ export const calculateGroupBalances = async (groupId: string): Promise<Record<st
 
 /**
  * Get settlement suggestions (who owes whom)
+ * Improved algorithm: Sort by amount to minimize number of transactions
  */
 export const getSettlementSuggestions = async (
   groupId: string,
@@ -351,14 +352,20 @@ export const getSettlementSuggestions = async (
 
   members.forEach((member) => {
     const balance = balances[member.id] || 0;
-    if (balance > 0) {
+    if (balance > 0.01) {
+      // Only include if balance is significant (more than 1 cent)
       creditors.push({ memberId: member.id, amount: balance });
-    } else if (balance < 0) {
+    } else if (balance < -0.01) {
+      // Only include if balance is significant (more than 1 cent)
       debtors.push({ memberId: member.id, amount: Math.abs(balance) });
     }
   });
 
-  // Generate settlement suggestions
+  // Sort by amount (largest first) to minimize number of transactions
+  creditors.sort((a, b) => b.amount - a.amount);
+  debtors.sort((a, b) => b.amount - a.amount);
+
+  // Generate settlement suggestions using greedy algorithm
   const suggestions: Array<{ from: string; to: string; amount: number }> = [];
   let creditorIndex = 0;
   let debtorIndex = 0;
@@ -367,18 +374,24 @@ export const getSettlementSuggestions = async (
     const creditor = creditors[creditorIndex];
     const debtor = debtors[debtorIndex];
 
+    // Skip if amounts are too small (rounding errors)
+    if (creditor.amount < 0.01 || debtor.amount < 0.01) {
+      break;
+    }
+
     const settlementAmount = Math.min(creditor.amount, debtor.amount);
     suggestions.push({
       from: debtor.memberId,
       to: creditor.memberId,
-      amount: settlementAmount,
+      amount: Math.round(settlementAmount * 100) / 100, // Round to 2 decimal places
     });
 
     creditor.amount -= settlementAmount;
     debtor.amount -= settlementAmount;
 
-    if (creditor.amount === 0) creditorIndex++;
-    if (debtor.amount === 0) debtorIndex++;
+    // Remove fully settled parties
+    if (creditor.amount < 0.01) creditorIndex++;
+    if (debtor.amount < 0.01) debtorIndex++;
   }
 
   return suggestions;
