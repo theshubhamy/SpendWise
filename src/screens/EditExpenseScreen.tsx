@@ -21,7 +21,9 @@ import {
   DatePicker,
   ScreenHeader,
 } from '@/components';
-import { EXPENSE_CATEGORIES, DEFAULT_SETTINGS } from '@/constants';
+import { DEFAULT_SETTINGS } from '@/constants';
+import { EXPENSE_CATEGORIES } from '@/constants/categories';
+import { CURRENCIES, getCurrencyDisplayName } from '@/constants/currencies';
 import { useExpenseStore } from '@/store';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/navigation/AppNavigator';
@@ -114,7 +116,6 @@ export const EditExpenseScreen: React.FC<EditExpenseScreenProps> = ({
     setLoading(true);
     try {
       const amountNum = parseFloat(amount);
-      // baseAmount will be recalculated automatically if amount or currency changes
 
       await updateExpense(expenseId, {
         amount: amountNum,
@@ -163,12 +164,10 @@ export const EditExpenseScreen: React.FC<EditExpenseScreenProps> = ({
     );
   };
 
-  const currencyOptions = [
-    { label: 'USD - US Dollar', value: 'USD' },
-    { label: 'EUR - Euro', value: 'EUR' },
-    { label: 'GBP - British Pound', value: 'GBP' },
-    { label: 'INR - Indian Rupee', value: 'INR' },
-  ];
+  const currencyOptions = CURRENCIES.map(currency => ({
+    label: getCurrencyDisplayName(currency.code),
+    value: currency.code,
+  }));
 
   const categoryOptions = EXPENSE_CATEGORIES.map(cat => ({
     label: cat,

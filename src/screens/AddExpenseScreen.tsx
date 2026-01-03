@@ -21,7 +21,7 @@ import {
   DatePicker,
   ScreenHeader,
 } from '@/components';
-import { EXPENSE_CATEGORIES } from '@/constants';
+import { EXPENSE_CATEGORIES } from '@/constants/categories';
 import { useExpenseStore } from '@/store';
 import { useGroupStore } from '@/store/groupStore';
 import * as expenseService from '@/services/expense.service';
@@ -135,7 +135,6 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
     setLoading(true);
     try {
       const amountNum = parseFloat(amount);
-      // baseAmount will be calculated automatically by the service
       // Create expense directly to get the ID (always personal, but can be split with group)
       const newExpense = await expenseService.createExpense({
         amount: amountNum,
@@ -184,9 +183,9 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
             (sum, id) => sum + (customAmountSplits[id] || 0),
             0,
           );
-          if (Math.abs(totalAmount - newExpense?.baseAmount) > 0.01) {
+          if (Math.abs(totalAmount - newExpense?.amount) > 0.01) {
             setErrors({
-              split: `Total amount must equal expense amount (${newExpense.baseAmount.toFixed(
+              split: `Total amount must equal expense amount (${newExpense.amount.toFixed(
                 2,
               )})`,
             });
@@ -213,7 +212,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
           await splitExpenseEqually(
             newExpense.id,
             selectedMemberIds,
-            newExpense.baseAmount,
+            newExpense.amount,
           );
         } else if (splitType === 'percentage') {
           await splitExpenseByPercentage(
@@ -222,7 +221,7 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({
               memberId: id,
               percentage: percentageSplits[id] || 0,
             })),
-            newExpense.baseAmount,
+            newExpense.amount,
           );
         } else if (splitType === 'custom') {
           await splitExpenseByAmount(

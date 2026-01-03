@@ -16,7 +16,6 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useExpenseStore } from '@/store';
 import { useGroupStore } from '@/store/groupStore';
-import { getTagsForExpense } from '@/services/tag.service';
 import { Card, ScreenHeader } from '@/components';
 import { format } from 'date-fns';
 import { RootStackParamList } from '@/navigation/AppNavigator';
@@ -139,9 +138,9 @@ export const ExpensesScreen: React.FC = () => {
           <Text
             style={[
               styles.filterText,
+              filter === 'all' ? styles.filterTextActive : styles.filterTextInactive,
               {
                 color: filter === 'all' ? colors.primary : colors.textSecondary,
-                fontWeight: filter === 'all' ? '600' : '500',
               },
             ]}
           >
@@ -164,9 +163,9 @@ export const ExpensesScreen: React.FC = () => {
           <Text
             style={[
               styles.filterText,
+              filter === 'personal' ? styles.filterTextActive : styles.filterTextInactive,
               {
                 color: filter === 'personal' ? colors.primary : colors.textSecondary,
-                fontWeight: filter === 'personal' ? '600' : '500',
               },
             ]}
           >
@@ -189,9 +188,9 @@ export const ExpensesScreen: React.FC = () => {
           <Text
             style={[
               styles.filterText,
+              filter === 'group' ? styles.filterTextActive : styles.filterTextInactive,
               {
                 color: filter === 'group' ? colors.primary : colors.textSecondary,
-                fontWeight: filter === 'group' ? '600' : '500',
               },
             ]}
           >
@@ -474,5 +473,11 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
+  },
+  filterTextActive: {
+    fontWeight: '600',
+  },
+  filterTextInactive: {
+    fontWeight: '500',
   },
 });

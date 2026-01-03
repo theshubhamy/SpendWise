@@ -11,8 +11,8 @@ export const QUERIES = {
   GET_EXPENSES_BY_CATEGORY: `SELECT * FROM ${TABLES.EXPENSES} WHERE category = ? ORDER BY date DESC`,
   GET_EXPENSES_BY_GROUP: `SELECT * FROM ${TABLES.EXPENSES} WHERE group_id = ? ORDER BY date DESC`,
   GET_EXPENSE_BY_ID: `SELECT * FROM ${TABLES.EXPENSES} WHERE id = ?`,
-  INSERT_EXPENSE: `INSERT INTO ${TABLES.EXPENSES} (id, amount, currency_code, base_amount, category, description, notes_encrypted, date, group_id, paid_by_member_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  UPDATE_EXPENSE: `UPDATE ${TABLES.EXPENSES} SET amount = ?, currency_code = ?, base_amount = ?, category = ?, description = ?, notes_encrypted = ?, date = ?, group_id = ?, paid_by_member_id = ?, updated_at = ? WHERE id = ?`,
+  INSERT_EXPENSE: `INSERT INTO ${TABLES.EXPENSES} (id, amount, currency_code, category, description, notes_encrypted, date, group_id, paid_by_member_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  UPDATE_EXPENSE: `UPDATE ${TABLES.EXPENSES} SET amount = ?, currency_code = ?, category = ?, description = ?, notes_encrypted = ?, date = ?, group_id = ?, paid_by_member_id = ?, updated_at = ? WHERE id = ?`,
   DELETE_EXPENSE: `DELETE FROM ${TABLES.EXPENSES} WHERE id = ?`,
 
   // Groups
@@ -40,18 +40,6 @@ export const QUERIES = {
   INSERT_PAYMENT: `INSERT INTO ${TABLES.PAYMENTS} (id, group_id, from_member_id, to_member_id, amount, currency_code, date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   DELETE_PAYMENT: `DELETE FROM ${TABLES.PAYMENTS} WHERE id = ?`,
 
-  // Tags
-  GET_ALL_TAGS: `SELECT * FROM ${TABLES.TAGS} ORDER BY name ASC`,
-  GET_TAG_BY_ID: `SELECT * FROM ${TABLES.TAGS} WHERE id = ?`,
-  GET_TAGS_BY_EXPENSE: `SELECT t.* FROM ${TABLES.TAGS} t INNER JOIN ${TABLES.EXPENSE_TAGS} et ON t.id = et.tag_id WHERE et.expense_id = ?`,
-  INSERT_TAG: `INSERT INTO ${TABLES.TAGS} (id, name, color, created_at) VALUES (?, ?, ?, ?)`,
-  DELETE_TAG: `DELETE FROM ${TABLES.TAGS} WHERE id = ?`,
-
-  // Expense Tags
-  INSERT_EXPENSE_TAG: `INSERT INTO ${TABLES.EXPENSE_TAGS} (expense_id, tag_id) VALUES (?, ?)`,
-  DELETE_EXPENSE_TAG: `DELETE FROM ${TABLES.EXPENSE_TAGS} WHERE expense_id = ? AND tag_id = ?`,
-  DELETE_EXPENSE_TAGS_BY_EXPENSE: `DELETE FROM ${TABLES.EXPENSE_TAGS} WHERE expense_id = ?`,
-
   // Recurring Expenses
   GET_ALL_RECURRING: `SELECT * FROM ${TABLES.RECURRING_EXPENSES} ORDER BY start_date ASC`,
   GET_RECURRING_BY_ID: `SELECT * FROM ${TABLES.RECURRING_EXPENSES} WHERE id = ?`,
@@ -70,8 +58,8 @@ export const QUERIES = {
   GET_ALL_CURRENCIES: `SELECT * FROM ${TABLES.CURRENCIES} ORDER BY is_base DESC, code ASC`,
   GET_CURRENCY_BY_CODE: `SELECT * FROM ${TABLES.CURRENCIES} WHERE code = ?`,
   GET_BASE_CURRENCY: `SELECT * FROM ${TABLES.CURRENCIES} WHERE is_base = 1 LIMIT 1`,
-  INSERT_CURRENCY: `INSERT INTO ${TABLES.CURRENCIES} (code, name, symbol, exchange_rate, is_base) VALUES (?, ?, ?, ?, ?)`,
-  UPDATE_CURRENCY: `UPDATE ${TABLES.CURRENCIES} SET name = ?, symbol = ?, exchange_rate = ?, is_base = ? WHERE code = ?`,
+  INSERT_CURRENCY: `INSERT INTO ${TABLES.CURRENCIES} (code, name, symbol, is_base) VALUES (?, ?, ?, ?)`,
+  UPDATE_CURRENCY: `UPDATE ${TABLES.CURRENCIES} SET name = ?, symbol = ?, is_base = ? WHERE code = ?`,
 
   // Undo History
   GET_UNDO_HISTORY: `SELECT * FROM ${TABLES.UNDO_HISTORY} ORDER BY timestamp DESC LIMIT ?`,
@@ -79,4 +67,3 @@ export const QUERIES = {
   DELETE_UNDO_ACTION: `DELETE FROM ${TABLES.UNDO_HISTORY} WHERE id = ?`,
   CLEAR_OLD_UNDO_HISTORY: `DELETE FROM ${TABLES.UNDO_HISTORY} WHERE timestamp < ?`,
 };
-

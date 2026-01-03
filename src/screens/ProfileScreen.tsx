@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,44 +26,14 @@ import {
 } from '@/services/settings.service';
 import { isBiometricAvailable } from '@/services/biometric.service';
 import { useThemeContext } from '@/context/ThemeContext';
+import { authService } from '@/services/auth.service';
 import Icon from '@react-native-vector-icons/ionicons';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
+import { Image } from 'react-native';
+import { getCurrencyDisplayName, CURRENCIES } from '@/constants/currencies';
 
 type ProfileScreenNavigationProp =
   NativeStackNavigationProp<RootStackParamList>;
-
-const getCurrencyDisplayName = (code: string): string => {
-  const currencyMap: Record<string, string> = {
-    USD: 'USD - US Dollar $',
-    EUR: 'EUR - Euro €',
-    GBP: 'GBP - British Pound £',
-    INR: 'INR - Indian Rupee ₹',
-    JPY: 'JPY - Japanese Yen ¥',
-    CAD: 'CAD - Canadian Dollar C$',
-    AUD: 'AUD - Australian Dollar A$',
-    CHF: 'CHF - Swiss Franc',
-    CNY: 'CNY - Chinese Yuan ¥',
-    SGD: 'SGD - Singapore Dollar S$',
-    HKD: 'HKD - Hong Kong Dollar HK$',
-    NZD: 'NZD - New Zealand Dollar NZ$',
-    KRW: 'KRW - South Korean Won ₩',
-    MXN: 'MXN - Mexican Peso $',
-    BRL: 'BRL - Brazilian Real R$',
-    ZAR: 'ZAR - South African Rand R',
-    RUB: 'RUB - Russian Ruble ₽',
-    AED: 'AED - UAE Dirham',
-    SAR: 'SAR - Saudi Riyal',
-    THB: 'THB - Thai Baht ฿',
-    MYR: 'MYR - Malaysian Ringgit RM',
-    IDR: 'IDR - Indonesian Rupiah Rp',
-    PHP: 'PHP - Philippine Peso ₱',
-    PKR: 'PKR - Pakistani Rupee ₨',
-    BDT: 'BDT - Bangladeshi Taka ৳',
-    LKR: 'LKR - Sri Lankan Rupee ₨',
-    NPR: 'NPR - Nepalese Rupee ₨',
-  };
-  return currencyMap[code] || code;
-};
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
@@ -73,6 +44,8 @@ export const ProfileScreen: React.FC = () => {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [baseCurrency, setBaseCurrencyState] = useState('INR');
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [user, setUser] = useState(authService.getCurrentUser());
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     // Load settings
@@ -82,6 +55,10 @@ export const ProfileScreen: React.FC = () => {
 
     // Check biometric availability
     isBiometricAvailable().then(setBiometricAvailable);
+
+    // Load user data
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
   }, []);
 
   const handleBiometricToggle = async (value: boolean) => {
@@ -99,6 +76,49 @@ export const ProfileScreen: React.FC = () => {
 
     setBiometricEnabled(value);
     setBiometricEnabledState(value);
+  };
+
+  const handleLogout = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await authService.signOut();
+            // Navigation will be handled by App.tsx auth state
+          } catch (error) {
+            Alert.alert(
+              'Error',
+              error instanceof Error ? error.message : 'Failed to sign out',
+            );
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleSync = async () => {
+    if (!user) {
+      Alert.alert('Not Signed In', 'Please sign in to sync your data.');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      // Import sync service dynamically to avoid circular dependencies
+      const { syncService } = await import('@/services/sync.service');
+      await syncService.syncAll();
+      Alert.alert('Success', 'Your data has been synced successfully.');
+    } catch (error) {
+      Alert.alert(
+        'Sync Error',
+        error instanceof Error ? error.message : 'Failed to sync data',
+      );
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -122,12 +142,29 @@ export const ProfileScreen: React.FC = () => {
             { backgroundColor: colors.primary + '20' },
           ]}
         >
-          <Icon name="person" size={48} color={colors.primary} />
+          {user?.photoURL ? (
+            <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+          ) : (
+            <Icon name="person" size={48} color={colors.primary} />
+          )}
         </View>
-        <Text style={[styles.profileName, { color: colors.text }]}>User</Text>
-        <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-          user@example.com
+        <Text style={[styles.profileName, { color: colors.text }]}>
+          {user?.name || 'User'}
         </Text>
+        <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+          {user?.email || 'Not signed in'}
+        </Text>
+        {!user && (
+          <TouchableOpacity
+            style={[styles.signInButton, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              // Navigate to auth screen or trigger sign in
+              // This will be handled by App.tsx auth state
+            }}
+          >
+            <Text style={styles.signInButtonText}>Sign In with Google</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -468,53 +505,59 @@ export const ProfileScreen: React.FC = () => {
           setBaseCurrencyState(currency.code);
         }}
         selectedCurrency={baseCurrency}
-        currencies={[
-          { code: 'USD', name: 'US Dollar', symbol: '$' },
-          { code: 'EUR', name: 'Euro', symbol: '€' },
-          { code: 'GBP', name: 'British Pound', symbol: '£' },
-          { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
-          { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-          { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-          { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-          { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-          { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
-          { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
-          { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
-          { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
-          { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
-          { code: 'MXN', name: 'Mexican Peso', symbol: '$' },
-          { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
-          { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-          { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
-          { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
-          { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼' },
-          { code: 'THB', name: 'Thai Baht', symbol: '฿' },
-          { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
-          { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' },
-          { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
-          { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨' },
-          { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳' },
-          { code: 'LKR', name: 'Sri Lankan Rupee', symbol: '₨' },
-          { code: 'NPR', name: 'Nepalese Rupee', symbol: '₨' },
-        ]}
+        currencies={CURRENCIES}
       />
 
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          Data
+          Sync & Backup
         </Text>
 
-        <TouchableOpacity
-          style={[
-            styles.settingItem,
-            { borderBottomColor: colors.borderLight },
-          ]}
-        >
-          <Text style={[styles.settingLabel, { color: colors.text }]}>
-            Export Data
-          </Text>
-          <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {user && (
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { borderBottomColor: colors.borderLight },
+            ]}
+            onPress={handleSync}
+            disabled={syncing}
+          >
+            <View style={styles.settingLeft}>
+              <View
+                style={[
+                  styles.settingIconContainer,
+                  { backgroundColor: colors.info + '15' },
+                ]}
+              >
+                <Icon name="cloud-upload" size={20} color={colors.info} />
+              </View>
+              <View style={styles.settingInfo}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  Sync to Firebase
+                </Text>
+                <Text
+                  style={[
+                    styles.settingDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {syncing
+                    ? 'Syncing your data...'
+                    : 'Backup your expenses to the cloud'}
+                </Text>
+              </View>
+            </View>
+            {syncing ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Icon
+                name="chevron-forward"
+                size={20}
+                color={colors.textSecondary}
+              />
+            )}
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[
@@ -522,12 +565,77 @@ export const ProfileScreen: React.FC = () => {
             { borderBottomColor: colors.borderLight },
           ]}
         >
-          <Text style={[styles.settingLabel, { color: colors.text }]}>
-            Backup & Restore
-          </Text>
+          <View style={styles.settingLeft}>
+            <View
+              style={[
+                styles.settingIconContainer,
+                { backgroundColor: colors.success + '15' },
+              ]}
+            >
+              <Icon name="download" size={20} color={colors.success} />
+            </View>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                Export Data
+              </Text>
+              <Text
+                style={[
+                  styles.settingDescription,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Export your expenses as CSV or JSON
+              </Text>
+            </View>
+          </View>
           <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
+
+      {user && (
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            Account
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.settingItem,
+              { borderBottomColor: colors.borderLight },
+            ]}
+            onPress={handleLogout}
+          >
+            <View style={styles.settingLeft}>
+              <View
+                style={[
+                  styles.settingIconContainer,
+                  { backgroundColor: colors.error + '15' },
+                ]}
+              >
+                <Icon name="log-out" size={20} color={colors.error} />
+              </View>
+              <View style={styles.settingInfo}>
+                <Text style={[styles.settingLabel, { color: colors.error }]}>
+                  Sign Out
+                </Text>
+                <Text
+                  style={[
+                    styles.settingDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Sign out of your account
+                </Text>
+              </View>
+            </View>
+            <Icon
+              name="chevron-forward"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -634,5 +742,21 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 15,
     fontWeight: '500',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  signInButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

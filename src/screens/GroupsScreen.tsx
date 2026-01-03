@@ -55,7 +55,7 @@ export const GroupsScreen: React.FC = () => {
               style={[styles.createButton, { backgroundColor: colors.primary }]}
               onPress={() => navigation.navigate('CreateGroup')}
             >
-              <Text style={[styles.createButtonText, { color: '#ffffff' }]}>Create Your First Group</Text>
+              <Text style={[styles.createButtonText, styles.createButtonTextWhite]}>Create Your First Group</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

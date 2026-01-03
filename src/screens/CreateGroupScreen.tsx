@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Input, Button, Picker, ScreenHeader } from '@/components';
 import { DEFAULT_SETTINGS } from '@/constants';
+import { CURRENCIES, getCurrencyDisplayName } from '@/constants/currencies';
 import { useGroupStore } from '@/store/groupStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/navigation/AppNavigator';
@@ -35,12 +36,10 @@ export const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const currencyOptions = [
-    { label: 'USD - US Dollar', value: 'USD' },
-    { label: 'EUR - Euro', value: 'EUR' },
-    { label: 'GBP - British Pound', value: 'GBP' },
-    { label: 'INR - Indian Rupee', value: 'INR' },
-  ];
+  const currencyOptions = CURRENCIES.map(currency => ({
+    label: getCurrencyDisplayName(currency.code),
+    value: currency.code,
+  }));
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};

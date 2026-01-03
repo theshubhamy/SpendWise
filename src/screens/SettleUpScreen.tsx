@@ -170,11 +170,6 @@ export const SettleUpScreen: React.FC<SettleUpScreenProps> = ({
     );
   }
 
-  const memberOptions = members.map(member => ({
-    label: member.name,
-    value: member.id,
-  }));
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader

@@ -17,7 +17,7 @@ import { useRecurringStore } from '@/store/recurringStore';
 import { RootStackParamList } from '@/navigation/AppNavigator';
 import { format } from 'date-fns';
 import { useThemeContext } from '@/context/ThemeContext';
-import { ScreenHeader, Card } from '@/components';
+import { ScreenHeader } from '@/components';
 import Icon from '@react-native-vector-icons/ionicons';
 
 type RecurringScreenNavigationProp =

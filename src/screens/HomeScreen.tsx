@@ -113,14 +113,14 @@ export const HomeScreen: React.FC = () => {
     calculateTotalBalances();
   }, [groups]);
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.baseAmount, 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const todayExpenses = expenses.filter(
     exp =>
       format(new Date(exp.date), 'yyyy-MM-dd') ===
       format(new Date(), 'yyyy-MM-dd'),
   );
   const todayTotal = todayExpenses.reduce(
-    (sum, exp) => sum + exp.baseAmount,
+    (sum, exp) => sum + exp.amount,
     0,
   );
   const thisMonthExpenses = expenses.filter(
@@ -128,7 +128,7 @@ export const HomeScreen: React.FC = () => {
       format(new Date(exp.date), 'yyyy-MM') === format(new Date(), 'yyyy-MM'),
   );
   const monthTotal = thisMonthExpenses.reduce(
-    (sum, exp) => sum + exp.baseAmount,
+    (sum, exp) => sum + exp.amount,
     0,
   );
 

@@ -1,22 +1,23 @@
 /**
  * Application constants
+ * Central export file for all constants
  */
 
-export const APP_NAME = 'SpendWise';
+// Re-export app constants
+export * from './app';
 
-// Database
-export const DB_NAME = 'spendwise.db';
-export const DB_VERSION = 1;
+// Re-export category constants
+export * from './categories';
 
-// Encryption
-export const ENCRYPTION_ALGORITHM = 'AES-256-GCM';
-export const KEY_SIZE = 256;
-export const IV_SIZE = 12; // 96 bits for GCM
-export const TAG_SIZE = 16; // 128 bits for authentication tag
+// Re-export recurring constants
+export * from './recurring';
 
-// Biometric
-export const BIOMETRIC_KEY_ALIAS = 'spendwise_biometric_key';
-export const ENCRYPTION_KEY_ALIAS = 'spendwise_encryption_key';
+// Re-export reminder constants
+export * from './reminders';
+
+
+// Re-export date format constants
+export * from './dates';
 
 // Storage Keys (MMKV)
 export const STORAGE_KEYS = {
@@ -26,13 +27,18 @@ export const STORAGE_KEYS = {
   AUTO_LOCK_TIMEOUT: 'auto_lock_timeout',
   LAST_ACTIVE_TIME: 'last_active_time',
   BASE_CURRENCY: 'base_currency',
-  EXCHANGE_RATES: 'exchange_rates',
   THEME: 'theme',
   // Auth & User
   USER_ID: 'user_id',
   USER_EMAIL: 'user_email',
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
+  // Sync
+  LAST_SYNCED_AT: 'last_synced_at',
+  LAST_SYNC_STATUS: 'last_sync_status',
+  LAST_SYNC_ERROR: 'last_sync_error',
+  SYNC_FREQUENCY: 'sync_frequency',
+  AUTO_SYNC_ENABLED: 'auto_sync_enabled',
 } as const;
 
 // Default Settings
@@ -42,63 +48,3 @@ export const DEFAULT_SETTINGS = {
   AUTO_LOCK_TIMEOUT: 5, // 5 minutes
   THEME: 'system' as const,
 };
-
-// Expense Categories
-export const EXPENSE_CATEGORIES = [
-  'Food & Dining',
-  'Transportation',
-  'Shopping',
-  'Bills & Utilities',
-  'Entertainment',
-  'Healthcare',
-  'Education',
-  'Travel',
-  'Personal Care',
-  'Subscriptions',
-  'Rent',
-  'EMI',
-  'Other',
-] as const;
-
-// Recurring Intervals
-export const RECURRING_INTERVALS = {
-  DAILY: 'daily',
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly',
-  CUSTOM: 'custom',
-} as const;
-
-// Reminder Types
-export const REMINDER_TYPES = {
-  BILL_DUE: 'bill_due',
-  SUBSCRIPTION: 'subscription',
-  RECURRING_EXPENSE: 'recurring_expense',
-} as const;
-
-// Date Formats
-export const DATE_FORMATS = {
-  DISPLAY: 'MMM dd, yyyy',
-  DISPLAY_WITH_TIME: 'MMM dd, yyyy HH:mm',
-  ISO: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-  DATE_ONLY: 'yyyy-MM-dd',
-} as const;
-
-// Tag Colors (predefined palette)
-export const TAG_COLORS = [
-  '#FF6B6B', // Red
-  '#4ECDC4', // Teal
-  '#45B7D1', // Blue
-  '#FFA07A', // Light Salmon
-  '#98D8C8', // Mint
-  '#F7DC6F', // Yellow
-  '#BB8FCE', // Purple
-  '#85C1E2', // Sky Blue
-  '#F8B739', // Orange
-  '#52BE80', // Green
-] as const;
-
-// Pagination
-export const DEFAULT_PAGE_SIZE = 20;
-
-// Undo History
-export const MAX_UNDO_HISTORY = 50;

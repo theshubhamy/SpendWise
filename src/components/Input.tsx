@@ -23,7 +23,7 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...props
 }) => {
-  const { colors, isDark } = useThemeContext();
+  const { colors } = useThemeContext();
   const [isFocused, setIsFocused] = useState(false);
 
   const borderColor = error
@@ -40,10 +40,10 @@ export const Input: React.FC<InputProps> = ({
       <View
         style={[
           styles.inputContainer,
+          isFocused ? styles.inputContainerFocused : styles.inputContainerUnfocused,
           {
             backgroundColor: colors.inputBackground,
             borderColor,
-            borderWidth: isFocused ? 2 : 1.5,
           },
           error && styles.inputError,
         ]}
@@ -52,9 +52,9 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[
             styles.input,
+            styles.inputFlex,
             {
               color: colors.text,
-              flex: 1,
             },
             leftIcon && styles.inputWithLeftIcon,
             rightIcon && styles.inputWithRightIcon,
@@ -98,9 +98,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     minHeight: 52,
   },
+  inputContainerFocused: {
+    borderWidth: 2,
+  },
+  inputContainerUnfocused: {
+    borderWidth: 1.5,
+  },
   input: {
     fontSize: 16,
     paddingVertical: 14,
+  },
+  inputFlex: {
+    flex: 1,
   },
   inputWithLeftIcon: {
     marginLeft: 12,

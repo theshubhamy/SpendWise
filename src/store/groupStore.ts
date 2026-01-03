@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import { ExpenseGroup, GroupMember } from '@/types';
+import { ExpenseGroup } from '@/types';
 import * as groupService from '@/services/group.service';
 
 interface GroupState {

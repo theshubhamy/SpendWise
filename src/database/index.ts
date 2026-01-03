@@ -3,7 +3,7 @@
  */
 
 import { open, QuickSQLiteConnection, QueryResult } from 'react-native-quick-sqlite';
-import { DB_NAME } from '@/constants';
+import { DB_NAME } from '@/constants/app';
 import { CREATE_TABLES, CREATE_INDEXES, TABLES } from '@/database/schema';
 import { initializeDefaultCurrencies } from '@/services/currency.service';
 

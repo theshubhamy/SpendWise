@@ -78,6 +78,26 @@ function AppContent() {
     initializeApp();
   }, []);
 
+  // Listen for auth state changes
+  useEffect(() => {
+    const checkAuthState = () => {
+      const authenticated = authService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+    };
+
+    // Subscribe to auth state changes
+    const unsubscribe = authService.onAuthStateChange(() => {
+      checkAuthState();
+    });
+
+    // Check initial state
+    checkAuthState();
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const handleAppBackground = useCallback(() => {
     // Lock app when going to background
     lockApp();

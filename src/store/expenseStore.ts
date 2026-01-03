@@ -12,7 +12,7 @@ interface ExpenseState {
   isLoading: boolean;
   error: string | null;
   fetchExpenses: () => Promise<void>;
-  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'>) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   getExpenseById: (id: string) => Expense | undefined;
@@ -103,7 +103,7 @@ export const selectExpenses = (state: ExpenseState) => state.expenses;
 export const selectExpenseById = (id: string) => (state: ExpenseState) =>
   state.expenses.find((e) => e.id === id);
 export const selectTotalExpenses = (state: ExpenseState) =>
-  state.expenses.reduce((sum, exp) => sum + exp.baseAmount, 0);
+  state.expenses.reduce((sum, exp) => sum + exp.amount, 0);
 export const selectExpensesByCategory = (category: string) => (state: ExpenseState) =>
   state.expenses.filter((e) => e.category === category);
 

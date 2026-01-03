@@ -24,7 +24,6 @@ export type RootStackParamList = {
   MainTabs: undefined;
   AddExpense: undefined;
   EditExpense: { expenseId: string };
-  Tags: undefined;
   CreateGroup: undefined;
   GroupDetail: { groupId: string };
   CreateRecurring: undefined;

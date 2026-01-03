@@ -18,7 +18,7 @@ import {
 } from '@/services/reminder.service';
 import { Reminder } from '@/types';
 import { format } from 'date-fns';
-import { Input, Button, DatePicker, ScreenHeader, Card } from '@/components';
+import { Input, Button, DatePicker, ScreenHeader } from '@/components';
 import { useThemeContext } from '@/context/ThemeContext';
 import Icon from '@react-native-vector-icons/ionicons';
 

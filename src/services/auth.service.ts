@@ -3,11 +3,23 @@
  * Handles Google Sign-In via Firebase Authentication
  */
 
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  FirebaseAuthTypes,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+} from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 import { Storage } from '@/utils/storage';
 import { STORAGE_KEYS } from '@/constants';
+
+// Suppress modular API deprecation warnings temporarily
+// These warnings are forward-compatibility notices for future versions
+// React Native Firebase v23 still uses the namespaced API as the primary pattern
+if (typeof globalThis !== 'undefined') {
+  (globalThis as any).RNFB_SILENCE_MODULAR_DEPRECATION_WARNINGS = true;
+}
 
 export interface User {
   id: string;
@@ -19,6 +31,7 @@ export interface User {
 
 class AuthService {
   private currentUser: User | null = null;
+  private authStateListeners: Set<() => void> = new Set();
 
   /**
    * Initialize authentication service
@@ -34,7 +47,9 @@ class AuthService {
     });
 
     // Listen for auth state changes
-    auth().onAuthStateChanged(
+    // Using getAuth() pattern for modular API compatibility
+    const authInstance = getAuth();
+    authInstance.onAuthStateChanged(
       async (firebaseUser: FirebaseAuthTypes.User | null) => {
         if (firebaseUser) {
           await this.loadUserFromFirebaseUser(firebaseUser);
@@ -45,11 +60,13 @@ class AuthService {
           Storage.delete(STORAGE_KEYS.ACCESS_TOKEN);
           Storage.delete(STORAGE_KEYS.REFRESH_TOKEN);
         }
+        // Notify all listeners of auth state change
+        this.notifyAuthStateChange();
       },
     );
 
     // Check for existing session
-    const firebaseUser = auth().currentUser;
+    const firebaseUser = authInstance.currentUser;
     if (firebaseUser) {
       await this.loadUserFromFirebaseUser(firebaseUser);
     }
@@ -81,10 +98,14 @@ class AuthService {
       }
 
       // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      // Using GoogleAuthProvider from modular API
+      const googleCredential = GoogleAuthProvider.credential(idToken);
 
       // Sign-in the user with the credential
-      const userCredential = await auth().signInWithCredential(
+      // Using modular API: signInWithCredential(auth, credential)
+      const authInstance = getAuth();
+      const userCredential = await signInWithCredential(
+        authInstance,
         googleCredential,
       );
 
@@ -93,6 +114,8 @@ class AuthService {
       }
 
       await this.loadUserFromFirebaseUser(userCredential.user);
+      // Notify listeners of auth state change
+      this.notifyAuthStateChange();
       return this.currentUser!;
     } catch (error: any) {
       console.error('Google sign-in error:', error);
@@ -131,13 +154,17 @@ class AuthService {
       }
 
       // Sign out from Firebase
-      await auth().signOut();
+      // Using getAuth() pattern for modular API compatibility
+      const authInstance = getAuth();
+      await authInstance.signOut();
 
       this.currentUser = null;
       Storage.delete(STORAGE_KEYS.USER_ID);
       Storage.delete(STORAGE_KEYS.USER_EMAIL);
       Storage.delete(STORAGE_KEYS.ACCESS_TOKEN);
       Storage.delete(STORAGE_KEYS.REFRESH_TOKEN);
+      // Notify listeners of auth state change
+      this.notifyAuthStateChange();
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;
@@ -155,7 +182,9 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    return this.currentUser !== null && auth().currentUser !== null;
+    // Using getAuth() pattern for modular API compatibility
+    const authInstance = getAuth();
+    return this.currentUser !== null && authInstance.currentUser !== null;
   }
 
   /**
@@ -163,9 +192,12 @@ class AuthService {
    */
   async getAccessToken(): Promise<string | null> {
     try {
-      const user = auth().currentUser;
+      // Using getAuth() pattern for modular API compatibility
+      const authInstance = getAuth();
+      const user = authInstance.currentUser;
       if (user) {
-        const token = await user.getIdToken();
+        // Use getIdToken() with explicit forceRefresh parameter
+        const token = await user.getIdToken(false);
         return token;
       }
       return null;
@@ -176,12 +208,37 @@ class AuthService {
   }
 
   /**
+   * Subscribe to auth state changes
+   */
+  onAuthStateChange(callback: () => void): () => void {
+    this.authStateListeners.add(callback);
+    // Return unsubscribe function
+    return () => {
+      this.authStateListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Notify all listeners of auth state change
+   */
+  private notifyAuthStateChange(): void {
+    this.authStateListeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Error in auth state listener:', error);
+      }
+    });
+  }
+
+  /**
    * Load user from Firebase user object
    */
   private async loadUserFromFirebaseUser(
     firebaseUser: FirebaseAuthTypes.User,
   ): Promise<void> {
-    const token = await firebaseUser.getIdToken();
+    // Use getIdToken() with explicit forceRefresh parameter to avoid deprecation warning
+    const token = await firebaseUser.getIdToken(false);
 
     this.currentUser = {
       id: firebaseUser.uid,

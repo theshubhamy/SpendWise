@@ -71,7 +71,7 @@ export const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+      <Card variant="elevated" style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Appearance
         </Text>
@@ -234,12 +234,6 @@ export const SettingsScreen: React.FC = () => {
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Organization
         </Text>
-
-        <TouchableOpacity
-          style={[
-            styles.settingItem,
-            { borderBottomColor: colors.borderLight },
-          ]}
 
         <TouchableOpacity
           style={[

@@ -41,7 +41,7 @@ export const Button: React.FC<ButtonProps> = ({
   leftIcon,
   rightIcon,
 }) => {
-  const { colors, isDark } = useThemeContext();
+  const { colors } = useThemeContext();
   const isDisabled = disabled || loading;
 
   const sizeStyles = {

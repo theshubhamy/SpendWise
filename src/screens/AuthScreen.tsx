@@ -3,18 +3,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeContext } from '@/context/ThemeContext';
 import { authService } from '@/services/auth.service';
-import { Button, Card } from '@/components';
+import { Button } from '@/components';
 import Icon from '@react-native-vector-icons/ionicons';
 
 export const AuthScreen: React.FC = () => {
@@ -30,7 +23,9 @@ export const AuthScreen: React.FC = () => {
     } catch (error) {
       Alert.alert(
         'Login Failed',
-        error instanceof Error ? error.message : 'Failed to sign in with Google',
+        error instanceof Error
+          ? error.message
+          : 'Failed to sign in with Google',
       );
     } finally {
       setLoading(false);
@@ -66,29 +61,18 @@ export const AuthScreen: React.FC = () => {
         </View>
 
         {/* Login Card */}
-        <Card variant="elevated" style={styles.loginCard}>
-          <Text style={[styles.loginTitle, { color: colors.text }]}>
-            Get Started
-          </Text>
-          <Text style={[styles.loginSubtitle, { color: colors.textSecondary }]}>
-            Sign in with Google to sync your data across devices
-          </Text>
+        <Button
+          title="Continue with Google"
+          onPress={handleGoogleLogin}
+          loading={loading}
+          disabled={loading}
+          style={styles.googleButton}
+          leftIcon={<Icon name="logo-google" size={20} color="#ffffff" />}
+        />
 
-          <Button
-            title="Continue with Google"
-            onPress={handleGoogleLogin}
-            loading={loading}
-            disabled={loading}
-            style={styles.googleButton}
-            leftIcon={
-              <Icon name="logo-google" size={20} color="#ffffff" />
-            }
-          />
-
-          <Text style={[styles.infoText, { color: colors.textTertiary }]}>
-            By continuing, you agree to our Terms of Service and Privacy Policy
-          </Text>
-        </Card>
+        <Text style={[styles.infoText, { color: colors.textTertiary }]}>
+          By continuing, you agree to our Terms of Service and Privacy Policy
+        </Text>
       </View>
     </View>
   );
@@ -144,6 +128,8 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     marginBottom: 16,
+    width: '80%',
+    alignSelf: 'center',
   },
   infoText: {
     fontSize: 12,
@@ -152,4 +138,3 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 });
-

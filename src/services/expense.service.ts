@@ -7,7 +7,6 @@ import { QUERIES } from '@/database/queries';
 import { Expense } from '@/types';
 import { encrypt, decrypt } from '@/services/crypto.service';
 import { generateUUID } from '@/utils/uuid';
-import { convertToBase } from '@/services/currency.service';
 
 /**
  * Get all expenses
@@ -18,16 +17,17 @@ export const getAllExpenses = async (): Promise<Expense[]> => {
 
   const expenses: Expense[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       const expense: Expense = {
         id: row.id as string,
         amount: row.amount as number,
         currencyCode: row.currency_code as string,
-        baseAmount: row.base_amount as number,
         category: row.category as string,
         description: row.description as string | undefined,
-        notes: row.notes_encrypted ? await decrypt(row.notes_encrypted as string) : undefined,
+        notes: row.notes_encrypted
+          ? await decrypt(row.notes_encrypted as string)
+          : undefined,
         date: row.date as string,
         groupId: row.group_id as string | undefined,
         createdAt: row.created_at as string,
@@ -48,15 +48,16 @@ export const getExpenseById = async (id: string): Promise<Expense | null> => {
   const result = db.query(QUERIES.GET_EXPENSE_BY_ID, [id]);
 
   if (result.rows && result.rows.length > 0) {
-    const row = result.rows[0];
+    const row = result.rows[0] as Record<string, unknown>;
     return {
       id: row.id as string,
       amount: row.amount as number,
       currencyCode: row.currency_code as string,
-      baseAmount: row.base_amount as number,
       category: row.category as string,
       description: row.description as string | undefined,
-      notes: row.notes_encrypted ? await decrypt(row.notes_encrypted as string) : undefined,
+      notes: row.notes_encrypted
+        ? await decrypt(row.notes_encrypted as string)
+        : undefined,
       date: row.date as string,
       groupId: row.group_id as string | undefined,
       paidByMemberId: row.paid_by_member_id as string | undefined,
@@ -71,15 +72,12 @@ export const getExpenseById = async (id: string): Promise<Expense | null> => {
 /**
  * Create a new expense
  */
-export const createExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'> & { baseAmount?: number }): Promise<Expense> => {
+export const createExpense = async (
+  expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>,
+): Promise<Expense> => {
   const db = getDatabase();
   const id = generateUUID();
   const now = new Date().toISOString();
-
-  // Calculate base amount if not provided
-  const baseAmount = expense.baseAmount !== undefined
-    ? expense.baseAmount
-    : await convertToBase(expense.amount, expense.currencyCode);
 
   const notesEncrypted = expense.notes ? await encrypt(expense.notes) : null;
 
@@ -87,7 +85,6 @@ export const createExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 
     id,
     expense.amount,
     expense.currencyCode,
-    baseAmount,
     expense.category,
     expense.description || null,
     notesEncrypted,
@@ -100,7 +97,6 @@ export const createExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 
 
   return {
     ...expense,
-    baseAmount,
     id,
     createdAt: now,
     updatedAt: now,
@@ -110,7 +106,10 @@ export const createExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 
 /**
  * Update an existing expense
  */
-export const updateExpense = async (id: string, updates: Partial<Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'>> & { baseAmount?: number }): Promise<Expense> => {
+export const updateExpense = async (
+  id: string,
+  updates: Partial<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>,
+): Promise<Expense> => {
   const db = getDatabase();
   const existing = await getExpenseById(id);
 
@@ -124,19 +123,11 @@ export const updateExpense = async (id: string, updates: Partial<Omit<Expense, '
     updatedAt: new Date().toISOString(),
   };
 
-  // Recalculate base amount if amount or currency changed
-  if (updates.amount !== undefined || updates.currencyCode !== undefined) {
-    updated.baseAmount = await convertToBase(updated.amount, updated.currencyCode);
-  } else if (updates.baseAmount !== undefined) {
-    updated.baseAmount = updates.baseAmount;
-  }
-
   const notesEncrypted = updated.notes ? await encrypt(updated.notes) : null;
 
   db.execute(QUERIES.UPDATE_EXPENSE, [
     updated.amount,
     updated.currencyCode,
-    updated.baseAmount,
     updated.category,
     updated.description || null,
     notesEncrypted,
@@ -161,22 +152,29 @@ export const deleteExpense = async (id: string): Promise<void> => {
 /**
  * Get expenses by date range
  */
-export const getExpensesByDateRange = async (startDate: string, endDate: string): Promise<Expense[]> => {
+export const getExpensesByDateRange = async (
+  startDate: string,
+  endDate: string,
+): Promise<Expense[]> => {
   const db = getDatabase();
-  const result = db.query(QUERIES.GET_EXPENSES_BY_DATE_RANGE, [startDate, endDate]);
+  const result = db.query(QUERIES.GET_EXPENSES_BY_DATE_RANGE, [
+    startDate,
+    endDate,
+  ]);
 
   const expenses: Expense[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
+    const row = result.rows?.[i] as Record<string, unknown> | undefined;
     if (row) {
       const expense: Expense = {
         id: row.id as string,
         amount: row.amount as number,
         currencyCode: row.currency_code as string,
-        baseAmount: row.base_amount as number,
         category: row.category as string,
         description: row.description as string | undefined,
-        notes: row.notes_encrypted ? await decrypt(row.notes_encrypted as string) : undefined,
+        notes: row.notes_encrypted
+          ? await decrypt(row.notes_encrypted as string)
+          : undefined,
         date: row.date as string,
         groupId: row.group_id as string | undefined,
         createdAt: row.created_at as string,
@@ -188,4 +186,3 @@ export const getExpensesByDateRange = async (startDate: string, endDate: string)
 
   return expenses;
 };
-

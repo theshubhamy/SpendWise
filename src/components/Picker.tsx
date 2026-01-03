@@ -82,11 +82,10 @@ export const Picker: React.FC<PickerProps> = ({
           <View
             style={[
               styles.pickerContainer,
-              // eslint-disable-next-line react-native/no-inline-styles
+              isFocused ? styles.pickerContainerFocused : styles.pickerContainerUnfocused,
               {
                 backgroundColor: colors.inputBackground,
                 borderColor,
-                borderWidth: isFocused ? 2 : 1.5,
               },
               error && styles.pickerError,
             ]}
@@ -220,6 +219,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     minHeight: 52,
+  },
+  pickerContainerFocused: {
+    borderWidth: 2,
+  },
+  pickerContainerUnfocused: {
     borderWidth: 1.5,
   },
   pickerContent: {

@@ -4,16 +4,17 @@
 
 import React, { useState } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input, Button, Picker, DatePicker, ScreenHeader } from '@/components';
-import { EXPENSE_CATEGORIES, DEFAULT_SETTINGS, RECURRING_INTERVALS } from '@/constants';
+import { DEFAULT_SETTINGS } from '@/constants';
+import { EXPENSE_CATEGORIES } from '@/constants/categories';
+import { RECURRING_INTERVALS, getIntervalLabel } from '@/constants/recurring';
+import { CURRENCIES, getCurrencyDisplayName } from '@/constants/currencies';
 import { useRecurringStore } from '@/store/recurringStore';
 import { RecurringExpense } from '@/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,7 +29,6 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
   navigation,
 }) => {
   const { colors } = useThemeContext();
-  const insets = useSafeAreaInsets();
   const { createRecurring } = useRecurringStore();
 
   const [amount, setAmount] = useState('');
@@ -42,24 +42,20 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const currencyOptions = [
-    { label: 'USD - US Dollar', value: 'USD' },
-    { label: 'EUR - Euro', value: 'EUR' },
-    { label: 'GBP - British Pound', value: 'GBP' },
-    { label: 'INR - Indian Rupee', value: 'INR' },
-  ];
+  const currencyOptions = CURRENCIES.map(currency => ({
+    label: getCurrencyDisplayName(currency.code),
+    value: currency.code,
+  }));
 
   const categoryOptions = EXPENSE_CATEGORIES.map(cat => ({
     label: cat,
     value: cat,
   }));
 
-  const intervalOptions = [
-    { label: 'Daily', value: RECURRING_INTERVALS.DAILY },
-    { label: 'Weekly', value: RECURRING_INTERVALS.WEEKLY },
-    { label: 'Monthly', value: RECURRING_INTERVALS.MONTHLY },
-    { label: 'Custom (Days)', value: RECURRING_INTERVALS.CUSTOM },
-  ];
+  const intervalOptions = Object.values(RECURRING_INTERVALS).map(intervalOption => ({
+    label: getIntervalLabel(intervalOption),
+    value: intervalOption,
+  }));
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -76,7 +72,7 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
       newErrors.startDate = 'Please select a start date';
     }
 
-    if (intervalValue && parseInt(intervalValue) <= 0) {
+    if (intervalValue && parseInt(intervalValue, 10) <= 0) {
       newErrors.intervalValue = 'Interval value must be greater than 0';
     }
 
@@ -97,7 +93,7 @@ export const CreateRecurringScreen: React.FC<CreateRecurringScreenProps> = ({
         category,
         description: description.trim() || undefined,
         interval,
-        intervalValue: parseInt(intervalValue) || 1,
+        intervalValue: parseInt(intervalValue, 10) || 1,
         startDate,
         endDate: endDate || undefined,
       });

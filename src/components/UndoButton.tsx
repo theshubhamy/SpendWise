@@ -19,7 +19,7 @@ export const UndoButton: React.FC<UndoButtonProps> = ({
   onUndo,
   autoHideDuration = 5000,
 }) => {
-  const { colors, isDark } = useThemeContext();
+  const { colors } = useThemeContext();
   const { undoLastAction } = useExpenseStore();
   const [visible, setVisible] = useState(false);
   const [slideAnim] = useState(new Animated.Value(100));
@@ -63,9 +63,6 @@ export const UndoButton: React.FC<UndoButtonProps> = ({
     }
   }, [visible, slideAnim, fadeAnim, autoHideDuration]);
 
-  const showUndo = () => {
-    setVisible(true);
-  };
 
   const hideUndo = () => {
     setVisible(false);

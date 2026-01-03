@@ -80,10 +80,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <View
           style={[
             styles.inputContainer,
+            isFocused ? styles.inputContainerFocused : styles.inputContainerUnfocused,
             {
               backgroundColor: colors.inputBackground,
               borderColor,
-              borderWidth: isFocused ? 2 : 1.5,
             },
             error && styles.inputError,
           ]}

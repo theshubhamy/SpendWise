@@ -45,7 +45,7 @@ export const ReportsScreen: React.FC = () => {
     }
   }, [expenses]);
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.baseAmount, 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const categoryAnalysis = getCategoryAnalysis(expenses);
   const highestExpenses = getHighestExpenses(expenses, 5);
   const avgDaily = getAverageDailySpending(expenses);
@@ -224,7 +224,7 @@ export const ReportsScreen: React.FC = () => {
                 </Text>
               </View>
               <Text style={[styles.expenseAmount, { color: colors.text }]}>
-                {currencySymbol}{expense.baseAmount.toFixed(2)}
+                {currencySymbol}{expense.amount.toFixed(2)}
               </Text>
             </View>
           ))}

@@ -9,8 +9,6 @@ export const TABLES = {
   EXPENSE_GROUPS: 'expense_groups',
   GROUP_MEMBERS: 'group_members',
   EXPENSE_SPLITS: 'expense_splits',
-  TAGS: 'tags',
-  EXPENSE_TAGS: 'expense_tags',
   RECURRING_EXPENSES: 'recurring_expenses',
   REMINDERS: 'reminders',
   CURRENCIES: 'currencies',
@@ -24,7 +22,6 @@ export const CREATE_TABLES = {
       id TEXT PRIMARY KEY,
       amount REAL NOT NULL,
       currency_code TEXT NOT NULL,
-      base_amount REAL NOT NULL,
       category TEXT NOT NULL,
       description TEXT,
       notes_encrypted TEXT,
@@ -75,25 +72,6 @@ export const CREATE_TABLES = {
     );
   `,
 
-  TAGS: `
-    CREATE TABLE IF NOT EXISTS ${TABLES.TAGS} (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE,
-      color TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-  `,
-
-  EXPENSE_TAGS: `
-    CREATE TABLE IF NOT EXISTS ${TABLES.EXPENSE_TAGS} (
-      expense_id TEXT NOT NULL,
-      tag_id TEXT NOT NULL,
-      PRIMARY KEY (expense_id, tag_id),
-      FOREIGN KEY (expense_id) REFERENCES ${TABLES.EXPENSES}(id) ON DELETE CASCADE,
-      FOREIGN KEY (tag_id) REFERENCES ${TABLES.TAGS}(id) ON DELETE CASCADE
-    );
-  `,
-
   RECURRING_EXPENSES: `
     CREATE TABLE IF NOT EXISTS ${TABLES.RECURRING_EXPENSES} (
       id TEXT PRIMARY KEY,
@@ -134,7 +112,6 @@ export const CREATE_TABLES = {
       code TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       symbol TEXT NOT NULL,
-      exchange_rate REAL NOT NULL,
       is_base INTEGER NOT NULL DEFAULT 0
     );
   `,
@@ -177,8 +154,6 @@ export const CREATE_INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_group_members_group_id ON ${TABLES.GROUP_MEMBERS}(group_id);`,
   `CREATE INDEX IF NOT EXISTS idx_expense_splits_expense_id ON ${TABLES.EXPENSE_SPLITS}(expense_id);`,
   `CREATE INDEX IF NOT EXISTS idx_expense_splits_member_id ON ${TABLES.EXPENSE_SPLITS}(member_id);`,
-  `CREATE INDEX IF NOT EXISTS idx_expense_tags_expense_id ON ${TABLES.EXPENSE_TAGS}(expense_id);`,
-  `CREATE INDEX IF NOT EXISTS idx_expense_tags_tag_id ON ${TABLES.EXPENSE_TAGS}(tag_id);`,
   `CREATE INDEX IF NOT EXISTS idx_recurring_expenses_start_date ON ${TABLES.RECURRING_EXPENSES}(start_date);`,
   `CREATE INDEX IF NOT EXISTS idx_reminders_scheduled_date ON ${TABLES.REMINDERS}(scheduled_date);`,
   `CREATE INDEX IF NOT EXISTS idx_undo_history_timestamp ON ${TABLES.UNDO_HISTORY}(timestamp);`,
@@ -186,4 +161,3 @@ export const CREATE_INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_payments_from_member ON ${TABLES.PAYMENTS}(from_member_id);`,
   `CREATE INDEX IF NOT EXISTS idx_payments_to_member ON ${TABLES.PAYMENTS}(to_member_id);`,
 ];
-

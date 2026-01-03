@@ -178,7 +178,7 @@ export const generateRecurringExpenses = async (): Promise<Expense[]> => {
         break;
       }
 
-      const expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt' | 'baseAmount'> = {
+      const expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> = {
         amount: pattern.amount,
         currencyCode: pattern.currencyCode,
         category: pattern.category,

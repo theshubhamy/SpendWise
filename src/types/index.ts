@@ -6,7 +6,6 @@ export interface Expense {
   id: string;
   amount: number;
   currencyCode: string;
-  baseAmount: number; // Converted to base currency
   category: string;
   description?: string;
   notes?: string; // Encrypted
@@ -42,18 +41,6 @@ export interface ExpenseSplit {
   amount: number;
   percentage?: number;
   createdAt: string;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  createdAt: string;
-}
-
-export interface ExpenseTag {
-  expenseId: string;
-  tagId: string;
 }
 
 export interface RecurringExpense {
@@ -92,14 +79,13 @@ export interface Currency {
   code: string;
   name: string;
   symbol: string;
-  exchangeRate: number; // Relative to base currency
   isBase: boolean;
 }
 
 export interface UndoAction {
   id: string;
   type: 'delete' | 'edit' | 'add';
-  entityType: 'expense' | 'group' | 'recurring' | 'tag';
+  entityType: 'expense' | 'group' | 'recurring';
   payload: unknown; // Previous state (serialized as JSON)
   timestamp: string;
 }

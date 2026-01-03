@@ -310,7 +310,7 @@ export const calculateGroupBalances = async (groupId: string): Promise<Record<st
     const expense = expenses.rows?.[i];
     if (expense) {
       const paidByMemberId = expense.paid_by_member_id as string | undefined;
-      const expenseAmount = expense.base_amount as number;
+      const expenseAmount = expense.amount as number;
 
       // Add to paid balance (whoever paid gets credit)
       if (paidByMemberId && balances[paidByMemberId] !== undefined) {

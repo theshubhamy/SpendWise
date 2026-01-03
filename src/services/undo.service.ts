@@ -6,7 +6,7 @@ import { getDatabase } from '@/database';
 import { QUERIES } from '@/database/queries';
 import { UndoAction } from '@/types';
 import { generateUUID } from '@/utils/uuid';
-import { MAX_UNDO_HISTORY } from '@/constants';
+import { MAX_UNDO_HISTORY } from '@/constants/app';
 import {
   createExpense,
   updateExpense,
@@ -111,7 +111,6 @@ const undoExpenseAction = async (action: UndoAction): Promise<void> => {
       await createExpense({
         amount: expense.amount,
         currencyCode: expense.currencyCode,
-        baseAmount: expense.baseAmount,
         category: expense.category,
         description: expense.description,
         notes: expense.notes,
@@ -125,7 +124,6 @@ const undoExpenseAction = async (action: UndoAction): Promise<void> => {
       await updateExpense(expense.id, {
         amount: expense.amount,
         currencyCode: expense.currencyCode,
-        baseAmount: expense.baseAmount,
         category: expense.category,
         description: expense.description,
         notes: expense.notes,
