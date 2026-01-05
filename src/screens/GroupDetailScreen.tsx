@@ -19,6 +19,7 @@ import {
   calculateGroupBalances,
   getSettlementSuggestions,
 } from '@/services/group.service';
+import { inviteService } from '@/services/invite.service';
 import { Button, ScreenHeader, Card, Input } from '@/components';
 import { GroupMember } from '@/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -46,6 +47,8 @@ export const GroupDetailScreen: React.FC<GroupDetailScreenProps> = ({
     Array<{ from: string; to: string; amount: number }>
   >([]);
   const [newMemberName, setNewMemberName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [showInviteForm, setShowInviteForm] = useState(false);
 
   const loadGroupData = useCallback(async () => {
     if (!group) return;
@@ -80,6 +83,29 @@ export const GroupDetailScreen: React.FC<GroupDetailScreenProps> = ({
     }
   };
 
+  const handleInviteUser = async () => {
+    if (!inviteEmail.trim()) {
+      Alert.alert('Error', 'Please enter an email address');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail.trim())) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      await inviteService.createInvite(groupId, group.name, inviteEmail.trim());
+      Alert.alert('Success', 'Invitation sent successfully');
+      setInviteEmail('');
+      setShowInviteForm(false);
+    } catch (error) {
+      console.error('Error sending invite:', error);
+      Alert.alert('Error', 'Failed to send invitation. Please try again.');
+    }
+  };
+
   const handleRemoveMember = (member: GroupMember) => {
     Alert.alert('Remove Member', `Remove ${member.name} from this group?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -88,7 +114,7 @@ export const GroupDetailScreen: React.FC<GroupDetailScreenProps> = ({
         style: 'destructive',
         onPress: async () => {
           try {
-            await removeMemberFromGroup(member.id);
+            await removeMemberFromGroup(groupId, member.id);
             await loadGroupData();
           } catch {
             Alert.alert('Error', 'Failed to remove member');
@@ -181,6 +207,52 @@ export const GroupDetailScreen: React.FC<GroupDetailScreenProps> = ({
               onPress={handleAddMember}
               style={styles.addButton}
             />
+          </View>
+          <View style={styles.inviteContainer}>
+            {!showInviteForm ? (
+              <Button
+                title="Invite by Email"
+                onPress={() => setShowInviteForm(true)}
+                variant="outline"
+                leftIcon={
+                  <Icon name="mail-outline" size={18} color={colors.primary} />
+                }
+              />
+            ) : (
+              <View>
+                <Input
+                  label="Invite User"
+                  value={inviteEmail}
+                  onChangeText={setInviteEmail}
+                  placeholder="user@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  leftIcon={
+                    <Icon
+                      name="mail-outline"
+                      size={20}
+                      color={colors.textSecondary}
+                    />
+                  }
+                />
+                <View style={styles.inviteButtons}>
+                  <Button
+                    title="Send Invite"
+                    onPress={handleInviteUser}
+                    style={styles.inviteButton}
+                  />
+                  <Button
+                    title="Cancel"
+                    onPress={() => {
+                      setShowInviteForm(false);
+                      setInviteEmail('');
+                    }}
+                    variant="ghost"
+                    style={styles.inviteButton}
+                  />
+                </View>
+              </View>
+            )}
           </View>
           {members.map(member => (
             <View
@@ -329,6 +401,18 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginTop: 8,
+  },
+  inviteContainer: {
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  inviteButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  inviteButton: {
+    flex: 1,
   },
   memberItem: {
     flexDirection: 'row',

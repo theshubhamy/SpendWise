@@ -1,5 +1,7 @@
 /**
- * Expense service - handles expense CRUD operations
+ * Expense service - handles personal expense CRUD operations (offline-first)
+ * Personal expenses are stored locally in SQLite
+ * Group expenses are handled by groupExpense.service.ts (Firebase)
  */
 
 import { getDatabase } from '@/database';
@@ -9,11 +11,14 @@ import { encrypt, decrypt } from '@/services/crypto.service';
 import { generateUUID } from '@/utils/uuid';
 
 /**
- * Get all expenses
+ * Get all personal expenses (excludes group expenses)
  */
 export const getAllExpenses = async (): Promise<Expense[]> => {
   const db = getDatabase();
-  const result = db.query(QUERIES.GET_ALL_EXPENSES);
+  // Only get personal expenses (where group_id IS NULL)
+  const result = db.query(
+    `SELECT * FROM expenses WHERE group_id IS NULL ORDER BY date DESC, created_at DESC`,
+  );
 
   const expenses: Expense[] = [];
   for (let i = 0; i < (result.rows?.length || 0); i++) {
@@ -29,7 +34,7 @@ export const getAllExpenses = async (): Promise<Expense[]> => {
           ? await decrypt(row.notes_encrypted as string)
           : undefined,
         date: row.date as string,
-        groupId: row.group_id as string | undefined,
+        // Personal expenses don't have groupId
         createdAt: row.created_at as string,
         updatedAt: row.updated_at as string,
       };
@@ -70,10 +75,13 @@ export const getExpenseById = async (id: string): Promise<Expense | null> => {
 };
 
 /**
- * Create a new expense
+ * Create a new personal expense (offline-first, no groupId)
  */
 export const createExpense = async (
-  expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>,
+  expense: Omit<
+    Expense,
+    'id' | 'createdAt' | 'updatedAt' | 'groupId' | 'paidByMemberId'
+  >,
 ): Promise<Expense> => {
   const db = getDatabase();
   const id = generateUUID();
@@ -81,6 +89,7 @@ export const createExpense = async (
 
   const notesEncrypted = expense.notes ? await encrypt(expense.notes) : null;
 
+  // Personal expenses: groupId and paidByMemberId are always null
   db.execute(QUERIES.INSERT_EXPENSE, [
     id,
     expense.amount,
@@ -89,8 +98,8 @@ export const createExpense = async (
     expense.description || null,
     notesEncrypted,
     expense.date,
-    expense.groupId || null,
-    expense.paidByMemberId || null,
+    null, // groupId - always null for personal expenses
+    null, // paidByMemberId - always null for personal expenses
     now,
     now,
   ]);
@@ -125,6 +134,7 @@ export const updateExpense = async (
 
   const notesEncrypted = updated.notes ? await encrypt(updated.notes) : null;
 
+  // Personal expenses: groupId and paidByMemberId are always null
   db.execute(QUERIES.UPDATE_EXPENSE, [
     updated.amount,
     updated.currencyCode,
@@ -132,8 +142,8 @@ export const updateExpense = async (
     updated.description || null,
     notesEncrypted,
     updated.date,
-    updated.groupId || null,
-    updated.paidByMemberId || null,
+    null, // groupId - always null for personal expenses
+    null, // paidByMemberId - always null for personal expenses
     updated.updatedAt,
     id,
   ]);

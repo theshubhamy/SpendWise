@@ -56,6 +56,16 @@ function AppContent() {
         const authenticated = authService.isAuthenticated();
         setIsAuthenticated(authenticated);
 
+        // Initialize FCM (only if authenticated)
+        if (authenticated) {
+          try {
+            const { fcmService: fcm } = await import('@/services/fcm.service');
+            await fcm.initialize();
+          } catch (fcmError) {
+            console.warn('FCM initialization failed:', fcmError);
+          }
+        }
+
         // Generate recurring expenses
         await generateRecurringExpenses();
 

@@ -1,72 +1,124 @@
 /**
  * Group expense service - handles expense groups and splitting
+ * Groups are stored in Firebase Firestore for real-time collaboration
  */
 
+import firestore from '@react-native-firebase/firestore';
 import { getDatabase } from '@/database';
 import { QUERIES } from '@/database/queries';
 import { ExpenseGroup, GroupMember, ExpenseSplit, Payment } from '@/types';
 import { generateUUID } from '@/utils/uuid';
+import { authService } from './auth.service';
 
 /**
- * Get all expense groups
+ * Get all expense groups from Firebase
+ * Returns groups where the current user is a member
  */
 export const getAllGroups = async (): Promise<ExpenseGroup[]> => {
-  const db = getDatabase();
-  const result = db.query(QUERIES.GET_ALL_GROUPS);
+  const user = authService.getCurrentUser();
+  if (!user) {
+    return [];
+  }
+
+  // Get all groups where user is a member
+  // Query without orderBy to avoid composite index requirement
+  const groupsSnapshot = await firestore()
+    .collection('groups')
+    .where('memberIds', 'array-contains', user.id)
+    .get();
 
   const groups: ExpenseGroup[] = [];
-  for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
-    if (row) {
-      groups.push({
-        id: row.id as string,
-        name: row.name as string,
-        description: row.description as string | undefined,
-        currencyCode: row.currency_code as string,
-        createdAt: row.created_at as string,
-        updatedAt: row.updated_at as string,
-      });
-    }
-  }
+  groupsSnapshot.docs.forEach(doc => {
+    const data = doc.data();
+    groups.push({
+      id: doc.id,
+      name: data.name,
+      description: data.description,
+      currencyCode: data.currencyCode,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    });
+  });
 
-  return groups;
+  // Sort by createdAt in memory (descending)
+  return groups.sort((a, b) => {
+    return (b.createdAt || '').localeCompare(a.createdAt || '');
+  });
 };
 
 /**
- * Get group by ID
+ * Get group by ID from Firebase
  */
 export const getGroupById = async (id: string): Promise<ExpenseGroup | null> => {
-  const db = getDatabase();
-  const result = db.query(QUERIES.GET_GROUP_BY_ID, [id]);
+  try {
+    const doc = await firestore().collection('groups').doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
 
-  if (result.rows && result.rows.length > 0) {
-    const row = result.rows[0];
+    const data = doc.data();
     return {
-      id: row.id as string,
-      name: row.name as string,
-      description: row.description as string | undefined,
-      currencyCode: row.currency_code as string,
-      createdAt: row.created_at as string,
-      updatedAt: row.updated_at as string,
+      id: doc.id,
+      name: data?.name,
+      description: data?.description,
+      currencyCode: data?.currencyCode,
+      createdAt: data?.createdAt,
+      updatedAt: data?.updatedAt,
     };
+  } catch (error) {
+    console.error('Error getting group:', error);
+    return null;
   }
-
-  return null;
 };
 
 /**
- * Create a new expense group
+ * Create a new expense group in Firebase
+ * Also adds the creator as a member
  */
 export const createGroup = async (
   name: string,
   currencyCode: string,
   description?: string,
 ): Promise<ExpenseGroup> => {
-  const db = getDatabase();
+  const user = authService.getCurrentUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   const id = generateUUID();
   const now = new Date().toISOString();
 
-  db.execute(QUERIES.INSERT_GROUP, [id, name, description || null, currencyCode, now, now]);
+  // Create group document in Firebase
+  const groupData = {
+    name,
+    description: description || null,
+    currencyCode,
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user.id,
+    memberIds: [user.id], // Track member IDs for querying
+    syncedAt: firestore.FieldValue.serverTimestamp(),
+  };
+
+  await firestore().collection('groups').doc(id).set(groupData);
+
+  // Add creator as a member
+  const memberId = generateUUID();
+  const memberData = {
+    id: memberId,
+    groupId: id,
+    userId: user.id,
+    name: user.name || 'Unknown',
+    email: user.email || null,
+    createdAt: now,
+  };
+
+  await firestore()
+    .collection('groups')
+    .doc(id)
+    .collection('members')
+    .doc(memberId)
+    .set(memberData);
 
   return {
     id,
@@ -79,13 +131,12 @@ export const createGroup = async (
 };
 
 /**
- * Update a group
+ * Update a group in Firebase
  */
 export const updateGroup = async (
   id: string,
   updates: { name?: string; description?: string; currencyCode?: string },
 ): Promise<ExpenseGroup> => {
-  const db = getDatabase();
   const existing = await getGroupById(id);
 
   if (!existing) {
@@ -98,52 +149,79 @@ export const updateGroup = async (
     updatedAt: new Date().toISOString(),
   };
 
-  db.execute(QUERIES.UPDATE_GROUP, [
-    updated.name,
-    updated.description || null,
-    updated.currencyCode,
-    updated.updatedAt,
-    id,
-  ]);
+  await firestore()
+    .collection('groups')
+    .doc(id)
+    .update({
+      ...updates,
+      updatedAt: updated.updatedAt,
+      syncedAt: firestore.FieldValue.serverTimestamp(),
+    });
 
   return updated;
 };
 
 /**
- * Delete a group
+ * Delete a group from Firebase
+ * Also deletes all members and expenses (cascade)
  */
 export const deleteGroup = async (id: string): Promise<void> => {
-  const db = getDatabase();
-  db.execute(QUERIES.DELETE_GROUP, [id]);
+  const batch = firestore().batch();
+  const groupRef = firestore().collection('groups').doc(id);
+
+  // Delete all members
+  const membersSnapshot = await groupRef.collection('members').get();
+  membersSnapshot.docs.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+
+  // Delete all expenses
+  const expensesSnapshot = await groupRef.collection('expenses').get();
+  expensesSnapshot.docs.forEach(doc => {
+    // Delete expense splits
+    doc.ref.collection('splits').get().then(splitsSnapshot => {
+      splitsSnapshot.docs.forEach(splitDoc => {
+        batch.delete(splitDoc.ref);
+      });
+    });
+    batch.delete(doc.ref);
+  });
+
+  // Delete the group
+  batch.delete(groupRef);
+
+  await batch.commit();
 };
 
 /**
- * Get members of a group
+ * Get members of a group from Firebase
  */
 export const getGroupMembers = async (groupId: string): Promise<GroupMember[]> => {
-  const db = getDatabase();
-  const result = db.query(QUERIES.GET_MEMBERS_BY_GROUP, [groupId]);
+  const snapshot = await firestore()
+    .collection('groups')
+    .doc(groupId)
+    .collection('members')
+    .orderBy('createdAt', 'asc')
+    .get();
 
   const members: GroupMember[] = [];
-  for (let i = 0; i < (result.rows?.length || 0); i++) {
-    const row = result.rows?.[i];
-    if (row) {
-      members.push({
-        id: row.id as string,
-        groupId: row.group_id as string,
-        userId: row.user_id as string,
-        name: row.name as string,
-        email: row.email as string | undefined,
-        createdAt: row.created_at as string,
-      });
-    }
-  }
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    members.push({
+      id: data.id || doc.id,
+      groupId: data.groupId || groupId,
+      userId: data.userId,
+      name: data.name,
+      email: data.email,
+      createdAt: data.createdAt,
+    });
+  });
 
   return members;
 };
 
 /**
- * Add member to group
+ * Add member to group in Firebase
  */
 export const addMemberToGroup = async (
   groupId: string,
@@ -151,28 +229,77 @@ export const addMemberToGroup = async (
   name: string,
   email?: string,
 ): Promise<GroupMember> => {
-  const db = getDatabase();
   const id = generateUUID();
   const now = new Date().toISOString();
 
-  db.execute(QUERIES.INSERT_MEMBER, [id, groupId, userId, name, email || null, now]);
-
-  return {
+  const memberData = {
     id,
     groupId,
     userId,
     name,
-    email,
+    email: email || null,
     createdAt: now,
   };
+
+  // Add member document
+  await firestore()
+    .collection('groups')
+    .doc(groupId)
+    .collection('members')
+    .doc(id)
+    .set(memberData);
+
+  // Update group's memberIds array
+  const groupRef = firestore().collection('groups').doc(groupId);
+  await groupRef.update({
+    memberIds: firestore.FieldValue.arrayUnion(userId),
+    updatedAt: now,
+    syncedAt: firestore.FieldValue.serverTimestamp(),
+  });
+
+  return memberData;
 };
 
 /**
- * Remove member from group
+ * Remove member from group in Firebase
  */
-export const removeMemberFromGroup = async (memberId: string): Promise<void> => {
-  const db = getDatabase();
-  db.execute(QUERIES.DELETE_MEMBER, [memberId]);
+export const removeMemberFromGroup = async (
+  groupId: string,
+  memberId: string,
+): Promise<void> => {
+  // Get member to find userId
+  const memberDoc = await firestore()
+    .collection('groups')
+    .doc(groupId)
+    .collection('members')
+    .doc(memberId)
+    .get();
+
+  if (!memberDoc.exists) {
+    throw new Error('Member not found');
+  }
+
+  const userId = memberDoc.data()?.userId;
+
+  // Delete member document
+  await firestore()
+    .collection('groups')
+    .doc(groupId)
+    .collection('members')
+    .doc(memberId)
+    .delete();
+
+  // Update group's memberIds array
+  if (userId) {
+    await firestore()
+      .collection('groups')
+      .doc(groupId)
+      .update({
+        memberIds: firestore.FieldValue.arrayRemove(userId),
+        updatedAt: new Date().toISOString(),
+        syncedAt: firestore.FieldValue.serverTimestamp(),
+      });
+  }
 };
 
 /**
@@ -291,9 +418,10 @@ export const splitExpenseByAmount = async (
  * Balance = What you paid - What you owe
  * Positive balance = You're owed money
  * Negative balance = You owe money
+ * Updated to work with Firebase group expenses
  */
 export const calculateGroupBalances = async (groupId: string): Promise<Record<string, number>> => {
-  const db = getDatabase();
+  const { groupExpenseService } = await import('./groupExpense.service');
   const members = await getGroupMembers(groupId);
   const balances: Record<string, number> = {};
 
@@ -302,30 +430,27 @@ export const calculateGroupBalances = async (groupId: string): Promise<Record<st
     balances[member.id] = 0;
   });
 
-  // Get all expenses for the group
-  const expenses = db.query(QUERIES.GET_EXPENSES_BY_GROUP, [groupId]);
+  // Get all expenses for the group from Firebase
+  const expenses = await groupExpenseService.getGroupExpenses(groupId);
 
   // Calculate balances: paid amount - owed amount
-  for (let i = 0; i < (expenses.rows?.length || 0); i++) {
-    const expense = expenses.rows?.[i];
-    if (expense) {
-      const paidByMemberId = expense.paid_by_member_id as string | undefined;
-      const expenseAmount = expense.amount as number;
+  for (const expense of expenses) {
+    const paidByMemberId = expense.paidByMemberId;
+    const expenseAmount = expense.amount;
 
-      // Add to paid balance (whoever paid gets credit)
-      if (paidByMemberId && balances[paidByMemberId] !== undefined) {
-        balances[paidByMemberId] = (balances[paidByMemberId] || 0) + expenseAmount;
-      }
-
-      // Subtract from owed balance (what each person owes)
-      const splits = await getExpenseSplits(expense.id as string);
-      splits.forEach((split) => {
-        balances[split.memberId] = (balances[split.memberId] || 0) - split.amount;
-      });
+    // Add to paid balance (whoever paid gets credit)
+    if (paidByMemberId && balances[paidByMemberId] !== undefined) {
+      balances[paidByMemberId] = (balances[paidByMemberId] || 0) + expenseAmount;
     }
+
+    // Subtract from owed balance (what each person owes)
+    const splits = await groupExpenseService.getExpenseSplits(groupId, expense.id);
+    splits.forEach((split) => {
+      balances[split.memberId] = (balances[split.memberId] || 0) - split.amount;
+    });
   }
 
-  // Subtract payments (settle up transactions)
+  // Subtract payments (settle up transactions) - still from local DB
   const payments = await getPaymentsByGroup(groupId);
   payments.forEach((payment) => {
     // Payment reduces the debt: from pays to

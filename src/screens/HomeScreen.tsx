@@ -119,10 +119,7 @@ export const HomeScreen: React.FC = () => {
       format(new Date(exp.date), 'yyyy-MM-dd') ===
       format(new Date(), 'yyyy-MM-dd'),
   );
-  const todayTotal = todayExpenses.reduce(
-    (sum, exp) => sum + exp.amount,
-    0,
-  );
+  const todayTotal = todayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const thisMonthExpenses = expenses.filter(
     exp =>
       format(new Date(exp.date), 'yyyy-MM') === format(new Date(), 'yyyy-MM'),
@@ -182,115 +179,76 @@ export const HomeScreen: React.FC = () => {
           contentContainerStyle={styles.statsScrollContent}
           style={styles.statsScrollView}
         >
-          <Card variant="elevated" style={styles.statCard}>
-            <View
-              style={[
-                styles.statIconContainer,
-                { backgroundColor: colors.primary + '15' },
-              ]}
-            >
-              <Icon name="wallet" size={20} color={colors.primary} />
-            </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Total Expenses
-            </Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>
-              {currencySymbol}
-              {totalExpenses.toFixed(2)}
-            </Text>
-          </Card>
-
-          <Card variant="elevated" style={styles.statCard}>
-            <View
-              style={[
-                styles.statIconContainer,
-                { backgroundColor: colors.success + '15' },
-              ]}
-            >
-              <Icon name="today" size={20} color={colors.success} />
-            </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              Today
-            </Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>
-              {currencySymbol}
-              {todayTotal.toFixed(2)}
-            </Text>
-          </Card>
-
-          <Card variant="elevated" style={styles.statCard}>
-            <View
-              style={[
-                styles.statIconContainer,
-                { backgroundColor: colors.secondary + '15' },
-              ]}
-            >
-              <Icon name="calendar" size={20} color={colors.secondary} />
-            </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              This Month
-            </Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>
-              {currencySymbol}
-              {monthTotal.toFixed(2)}
-            </Text>
-          </Card>
-
-          <Card variant="elevated" style={styles.statCard}>
-            <View
-              style={[
-                styles.statIconContainer,
-                { backgroundColor: colors.error + '15' },
-              ]}
-            >
-              <Icon name="arrow-down" size={20} color={colors.error} />
-            </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              You Owe
-            </Text>
-            {loadingBalances ? (
-              <ActivityIndicator size="small" color={colors.error} />
-            ) : (
-              <Text style={[styles.statValue, { color: colors.error }]}>
-                {currencySymbol}
-                {youOwe.toFixed(2)}
+          {[
+            {
+              icon: 'wallet',
+              label: 'Total Expenses',
+              currencySymbol: currencySymbol,
+              value: totalExpenses.toFixed(2),
+              color: colors.primary,
+              isLoading: false,
+            },
+            {
+              icon: 'today',
+              label: 'Today',
+              currencySymbol: currencySymbol,
+              value: todayTotal.toFixed(2),
+              color: colors.success,
+              isLoading: false,
+            },
+            {
+              icon: 'calendar',
+              label: 'This Month',
+              currencySymbol: currencySymbol,
+              value: monthTotal.toFixed(2),
+              color: colors.secondary,
+              isLoading: false,
+            },
+            {
+              icon: 'arrow-down',
+              label: 'You Owe',
+              currencySymbol: currencySymbol,
+              value: youOwe.toFixed(2),
+              color: colors.error,
+              isLoading: loadingBalances,
+            },
+            {
+              icon: 'arrow-up',
+              label: "You're Owed",
+              currencySymbol: currencySymbol,
+              value: youAreOwed.toFixed(2),
+              color: colors.success,
+              isLoading: loadingBalances,
+            },
+          ].map(item => (
+            <Card key={item.label} variant="elevated" style={styles.statCard}>
+              <View style={styles.statContent}>
+                <View
+                  style={[
+                    styles.statIconContainer,
+                    { backgroundColor: item.color + '15' },
+                  ]}
+                >
+                  <Icon name={item.icon as any} size={20} color={item.color} />
+                </View>
+                {item.isLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={item.color}
+                    style={styles.statLoading}
+                  />
+                ) : (
+                  <Text style={[styles.statValue, { color: colors.text }]}>
+                    {item.currencySymbol}
+                    {item.value}
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {item.label}
               </Text>
-            )}
-          </Card>
-
-          <Card variant="elevated" style={styles.statCard}>
-            <View
-              style={[
-                styles.statIconContainer,
-                { backgroundColor: (colors.success || colors.primary) + '15' },
-              ]}
-            >
-              <Icon
-                name="arrow-up"
-                size={20}
-                color={colors.success || colors.primary}
-              />
-            </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              You're Owed
-            </Text>
-            {loadingBalances ? (
-              <ActivityIndicator
-                size="small"
-                color={colors.success || colors.primary}
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.statValue,
-                  { color: colors.success || colors.primary },
-                ]}
-              >
-                {currencySymbol}
-                {youAreOwed.toFixed(2)}
-              </Text>
-            )}
-          </Card>
+            </Card>
+          ))}
         </ScrollView>
 
         {/* Recent Expenses */}
@@ -464,7 +422,12 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'flex-start',
     marginRight: 0,
-    minHeight: 140,
+    minHeight: 80,
+  },
+  statContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   statIconContainer: {
     width: 40,
@@ -487,6 +450,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.3,
     lineHeight: 24,
+  },
+  statLoading: {
+    marginLeft: 4,
   },
   centerContainer: {
     padding: 40,
