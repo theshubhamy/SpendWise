@@ -274,18 +274,6 @@ export const HomeScreen: React.FC = () => {
             >
               Start tracking your expenses to see them here!
             </Text>
-            <TouchableOpacity
-              style={[
-                styles.addFirstButton,
-                { backgroundColor: colors.primary },
-              ]}
-              onPress={() => navigation.navigate('AddExpense')}
-            >
-              <Icon name="add" size={20} color="#ffffff" />
-              <Text style={styles.addFirstButtonText}>
-                Add Your First Expense
-              </Text>
-            </TouchableOpacity>
           </Card>
         ) : (
           <View style={styles.expensesList}>
